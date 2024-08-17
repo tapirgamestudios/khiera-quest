@@ -9,6 +9,22 @@ pub enum Collider {
     Line(Line),
 }
 
+impl Collider {
+    pub fn collides_circle(&self, circle: &Circle) -> bool {
+        match self {
+            Collider::Circle(this) => this.collides_circle(circle),
+            Collider::Line(this) => this.collides_circle(circle),
+        }
+    }
+
+    pub fn normal_circle(&self, circle: &Circle) -> Vector2D<Number> {
+        match self {
+            Collider::Circle(this) => (this.position - circle.position).fast_normalise(),
+            Collider::Line(line) => line.normal,
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct RealSpace(pub Vector2D<Number>);
 

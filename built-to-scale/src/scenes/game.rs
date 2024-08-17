@@ -1,0 +1,124 @@
+use agb::{display::affine::AffineMatrix, fixnum::Vector2D, input::ButtonController};
+use util::{Circle, Collider, Number};
+
+use crate::resources;
+
+use super::Scene;
+
+struct Offset {
+    space: AffineMatrix,
+}
+
+struct Player {
+    angle: AffineMatrix,
+    speed: Vector2D<Number>,
+    position: Vector2D<Number>,
+    on_ground: bool,
+}
+
+impl Player {
+    fn handle_direction_input(&mut self, x: i32) {
+        let acceleration = Vector2D::new(Number::new(1), Number::new(0));
+        let acceleration = AffineMatrix::from_translation(acceleration) * self.angle;
+        let acceleration = acceleration.position();
+
+        self.speed += acceleration;
+    }
+}
+
+pub struct Game {
+    screen_space_offset: Offset,
+    player: Player,
+    terrain: Terrain,
+}
+
+impl Game {
+    pub fn new() -> Self {
+        Self {
+            screen_space_offset: Offset {
+                space: AffineMatrix::from_rotation::<8>(0.into()),
+            },
+            player: Player {
+                angle: AffineMatrix::from_rotation::<8>(0.into()),
+                speed: (0, 0).into(),
+                position: (0, 0).into(),
+                on_ground: false,
+            },
+            terrain: Terrain {},
+        }
+    }
+
+    fn handle_direction_input(&mut self, x: i32) {
+        self.player.handle_direction_input(x);
+    }
+
+    fn handle_jump_input(&mut self) {
+        //todo
+    }
+
+    fn handle_collider_collisions(&mut self) -> bool {
+        let colliders = self.terrain.colliders(self.player.position);
+        let player_circle = Circle {
+            position: self.player.position,
+            radius: 8.into(),
+        };
+
+        for collider in colliders {
+            if collider.collides_circle(&player_circle) {
+                let normal = collider.normal_circle(&player_circle);
+                // todo: set the player angle
+                self.player.speed += collider.normal_circle(&player_circle);
+                return true;
+            }
+        }
+        false
+    }
+
+    fn physics_frame(&mut self) {
+        // todo, set the player angle
+        let gravity = self.terrain.gravity(self.player.position);
+
+        self.player.speed += gravity;
+        self.player.on_ground = self.handle_collider_collisions();
+
+        self.player.position += self.player.speed;
+    }
+}
+
+impl Scene for Game {
+    fn transition(&mut self, transition: &mut super::Transition) -> Option<super::TransitionScene> {
+        None
+    }
+
+    fn update(&mut self, update: &mut super::Update) {
+        let button_press = update.button_x_tri();
+        self.handle_direction_input(button_press as i32);
+        self.physics_frame();
+    }
+
+    fn display(&mut self, display: &mut super::Display) {
+        display.display(
+            resources::PLAYER.sprite(0),
+            &self.player.angle,
+            self.player.position,
+        );
+    }
+}
+
+struct Terrain {
+    // todo
+}
+
+impl Terrain {
+    fn gravity(&self, position: Vector2D<Number>) -> Vector2D<Number> {
+        (Vector2D::<Number>::from((100, 100)) - position).fast_normalise()
+    }
+
+    fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
+        [Collider::Circle(Circle {
+            position: (100, 100).into(),
+            radius: 64.into(),
+        })]
+        .into_iter()
+    }
+}
