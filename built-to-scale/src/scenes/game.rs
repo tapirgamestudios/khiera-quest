@@ -48,8 +48,6 @@ impl Player {
             )
                 .into();
 
-            agb::println!("{:?}", rotated_acceleration);
-
             self.speed += rotated_acceleration;
         }
     }
