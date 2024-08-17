@@ -1,0 +1,11 @@
+[package]
+name = "map"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+phf = { version = "0.11.1", default-features = false }
+util = { path = "../util" }
+
+[build-dependencies]
+map-compiler = { path = "../map-compiler" }

@@ -5,6 +5,12 @@
 		},
 		{
 			"path": "built-to-scale"
+		},
+		{
+			"path": "map-compiler"
+		},
+		{
+			"path": "map"
 		}
 	],
 	"launch": {

@@ -3,6 +3,7 @@ use agb_fixnum::{Num, Vector2D};
 
 pub type Number = Num<i32, 8>;
 
+#[derive(Clone, Debug)]
 pub enum Collider {
     Circle(Circle),
     Line(Line),
