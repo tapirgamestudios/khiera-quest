@@ -205,8 +205,6 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
         }
     }
 
-    println!("{colliders:#?}");
-
     colliders
 }
 
