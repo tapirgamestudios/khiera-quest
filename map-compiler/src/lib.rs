@@ -148,7 +148,7 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
                     radius: Number::from_f32(*width / 2.),
                 }));
             }
-            tiled::ObjectShape::Polyline { points } => {
+            tiled::ObjectShape::Polyline { points } | tiled::ObjectShape::Polygon { points } => {
                 for x in points.windows(2) {
                     let [start, end] = x else { panic!() };
                     let start = (start.0 + object.x, start.1 + object.y);
@@ -164,8 +164,6 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
                     }))
                 }
             }
-
-            tiled::ObjectShape::Polygon { points } => todo!(),
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
         }
     }
