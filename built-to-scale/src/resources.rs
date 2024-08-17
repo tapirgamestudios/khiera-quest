@@ -1,6 +1,6 @@
 use agb::{display::object::Graphics, include_aseprite};
 
-static SPRITES: &Graphics = include_aseprite!("gfx/sprites.aseprite");
+static SPRITES: &Graphics = include_aseprite!("gfx/astronaut.aseprite");
 
 macro_rules! extract_statics {
     (
@@ -15,4 +15,4 @@ macro_rules! extract_statics {
     };
 }
 
-extract_statics!(SPRITES, [PLAYER]);
+extract_statics!(SPRITES, [IDLE, WALK, JUMP]);

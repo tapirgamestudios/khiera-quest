@@ -18,11 +18,13 @@ struct Player {
 
 impl Player {
     fn handle_direction_input(&mut self, x: i32) {
-        let acceleration = Vector2D::new(Number::new(1), Number::new(0));
-        let acceleration = AffineMatrix::from_translation(acceleration) * self.angle;
-        let acceleration = acceleration.position();
+        if x != 0 {
+            let acceleration = Vector2D::new(Number::new(x) / 32, Number::new(0));
+            let acceleration = AffineMatrix::from_translation(acceleration) * self.angle;
+            let acceleration = acceleration.position();
 
-        self.speed += acceleration;
+            self.speed += acceleration;
+        }
     }
 }
 
@@ -66,8 +68,16 @@ impl Game {
         for collider in colliders {
             if collider.collides_circle(&player_circle) {
                 let normal = collider.normal_circle(&player_circle);
-                // todo: set the player angle
-                self.player.speed += collider.normal_circle(&player_circle);
+                self.player.angle = AffineMatrix {
+                    a: -normal.y,
+                    b: normal.x,
+                    c: -normal.x,
+                    d: -normal.y,
+                    x: 0.into(),
+                    y: 0.into(),
+                };
+
+                self.player.speed -= normal * normal.dot(self.player.speed);
                 return true;
             }
         }
@@ -98,7 +108,7 @@ impl Scene for Game {
 
     fn display(&mut self, display: &mut super::Display) {
         display.display(
-            resources::PLAYER.sprite(0),
+            resources::IDLE.sprite(0),
             &self.player.angle,
             self.player.position,
         );
@@ -117,7 +127,7 @@ impl Terrain {
     fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
         [Collider::Circle(Circle {
             position: (100, 100).into(),
-            radius: 64.into(),
+            radius: 32.into(),
         })]
         .into_iter()
     }

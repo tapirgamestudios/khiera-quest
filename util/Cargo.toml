@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-agb_fixnum = "0.20.5"
+agb_fixnum = { path = "../../agb/agb-fixnum" }

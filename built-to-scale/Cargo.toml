@@ -5,7 +5,7 @@ authors = [""]
 edition = "2021"
 
 [dependencies]
-agb = "0.20.5"
+agb = { path = "../../agb/agb" }
 util = { path = "../util" }
 
 

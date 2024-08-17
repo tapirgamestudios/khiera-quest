@@ -51,6 +51,7 @@ impl Display<'_, '_> {
         let aff = *affine * AffineMatrix::from_translation(position);
         o.set_affine_matrix(AffineMatrixInstance::new(aff.to_object_wrapping()));
         o.show_affine(AffineMode::Affine);
+        o.set_position(position.floor());
 
         o
     }

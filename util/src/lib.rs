@@ -19,7 +19,7 @@ impl Collider {
 
     pub fn normal_circle(&self, circle: &Circle) -> Vector2D<Number> {
         match self {
-            Collider::Circle(this) => (this.position - circle.position).fast_normalise(),
+            Collider::Circle(this) => (circle.position - this.position).fast_normalise(),
             Collider::Line(line) => line.normal,
         }
     }
