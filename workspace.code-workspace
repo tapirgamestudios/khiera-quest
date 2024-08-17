@@ -1,10 +1,61 @@
 {
-  "folders": [
-	{
-		"path": "util"
+	"folders": [
+		{
+			"path": "util"
+		},
+		{
+			"path": "built-to-scale"
+		}
+	],
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "(gdb) Launch",
+				"type": "cppdbg",
+				"request": "launch",
+				"targetArchitecture": "arm",
+				"args": [],
+				"stopAtEntry": false,
+				"environment": [
+					{
+						"name": "CARGO_TARGET_DIR",
+						"value": "${workspaceFolder:built-to-scale}/target",
+					},
+				],
+				"externalConsole": false,
+				"MIMode": "gdb",
+				"miDebuggerServerAddress": "localhost:2345",
+				"preLaunchTask": "Rust build: debug",
+				"program": "${workspaceFolder:built-to-scale}/target/thumbv4t-none-eabi/debug/built-to-scale",
+				"cwd": "${workspaceFolder:built-to-scale}",
+				"linux": {
+					"miDebuggerPath": "arm-none-eabi-gdb",
+					"setupCommands": [
+						{
+							"text": "shell \"mgba-qt\" -g \"${workspaceFolder:built-to-scale}/target/thumbv4t-none-eabi/debug/built-to-scale\" &"
+						}
+					]
+				},
+			},
+		],
 	},
-	{
-		"path": "built-to-scale"
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "Rust build: debug",
+				"command": "cargo",
+				"args": [
+					"build"
+				],
+				"options": {
+					"cwd": "${workspaceFolder:built-to-scale}",
+					"env": {
+						"CARGO_TARGET_DIR": "${workspaceFolder:built-to-scale}/target"
+					}
+				}
+			},
+		],
 	}
-]
 }
