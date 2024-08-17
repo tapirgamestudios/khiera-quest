@@ -1,4 +1,7 @@
-use agb::{display::affine::AffineMatrix, fixnum::Vector2D, input::ButtonController};
+use agb::{
+    display::affine::AffineMatrix,
+    fixnum::{num, Vector2D},
+};
 use util::{Circle, Collider, Number};
 
 use crate::resources;
@@ -17,13 +20,35 @@ struct Player {
 }
 
 impl Player {
+    fn set_angle_from_normal(&mut self, normal: Vector2D<Number>) {
+        self.angle = AffineMatrix {
+            a: -normal.y,
+            b: normal.x,
+            c: -normal.x,
+            d: -normal.y,
+            x: 0.into(),
+            y: 0.into(),
+        };
+    }
+
+    fn get_normal(&self) -> Vector2D<Number> {
+        (self.angle.b, -self.angle.a).into()
+    }
+
     fn handle_direction_input(&mut self, x: i32) {
         if x != 0 {
-            let acceleration = Vector2D::new(Number::new(x) / 32, Number::new(0));
-            let acceleration = AffineMatrix::from_translation(acceleration) * self.angle;
-            let acceleration = acceleration.position();
+            let acceleration: Vector2D<Number> = Vector2D::new(0.into(), Number::new(x) / 8);
+            let normal = self.get_normal();
 
-            self.speed += acceleration;
+            let rotated_acceleration = (
+                normal.x * acceleration.x - normal.y * acceleration.y,
+                normal.y * acceleration.x + normal.x * acceleration.y,
+            )
+                .into();
+
+            agb::println!("{:?}", rotated_acceleration);
+
+            self.speed += rotated_acceleration;
         }
     }
 }
@@ -68,16 +93,10 @@ impl Game {
         for collider in colliders {
             if collider.collides_circle(&player_circle) {
                 let normal = collider.normal_circle(&player_circle);
-                self.player.angle = AffineMatrix {
-                    a: -normal.y,
-                    b: normal.x,
-                    c: -normal.x,
-                    d: -normal.y,
-                    x: 0.into(),
-                    y: 0.into(),
-                };
+                self.player.set_angle_from_normal(normal);
 
                 self.player.speed -= normal * normal.dot(self.player.speed);
+                self.player.speed *= num!(0.8);
                 return true;
             }
         }
@@ -89,6 +108,7 @@ impl Game {
         let gravity = self.terrain.gravity(self.player.position);
 
         self.player.speed += gravity;
+
         self.player.on_ground = self.handle_collider_collisions();
 
         self.player.position += self.player.speed;
