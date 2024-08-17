@@ -147,8 +147,8 @@ impl Terrain {
     fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
         [
             Collider::Line(Line {
-                start: Vector2D::new(num!(0.0), num!(100.0)),
-                end: Vector2D::new(num!(400.0), num!(100.0)),
+                start: Vector2D::new(num!(100.0), num!(100.0)),
+                end: Vector2D::new(num!(150.0), num!(100.0)),
                 normal: Vector2D::new(num!(0.0), num!(-1.0)),
             }),
             Collider::Line(Line {
@@ -160,6 +160,10 @@ impl Terrain {
                 start: Vector2D::new(num!(150.0), num!(150.0)),
                 end: Vector2D::new(num!(100.0), num!(100.0)),
                 normal: Vector2D::new(num!(-0.7071067811865475), num!(0.7071067811865475)),
+            }),
+            Collider::Circle(Circle {
+                position: (140, 110).into(),
+                radius: 30.into(),
             }),
         ]
         .into_iter()
