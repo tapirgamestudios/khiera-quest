@@ -58,40 +58,33 @@ pub struct Line {
 impl Line {
     #[inline(never)]
     pub fn collides_circle(&self, circle: &Circle) -> bool {
-        let m = (self.start.x - circle.position.x).floor();
-        let n = (self.start.y - circle.position.y).floor();
+        let c = (self.start.x - circle.position.x).floor();
+        let d = (self.start.y - circle.position.y).floor();
 
-        let c = (self.end.x - self.start.x).floor();
-        let d = (self.end.y - self.start.y).floor();
+        let m = (self.end.x - self.start.x).floor();
+        let n = (self.end.y - self.start.y).floor();
 
         let r = circle.radius.floor();
 
         let discriminant = r * r * (m * m + n * n) - (m * d - n * c) * (m * d - n * c);
 
-        if discriminant < 0.into() {
+        if discriminant < 0 {
             return false;
         }
 
         let lower_bound_of_sqrt = m * c + n * d;
         let upper_bound_of_sqrt = m * m + n * n + lower_bound_of_sqrt;
 
-        agb::println!(
-            "{} {} {}",
-            lower_bound_of_sqrt,
-            discriminant,
-            upper_bound_of_sqrt
-        );
-
         let lower_bound_of_sqrt_squared = lower_bound_of_sqrt * lower_bound_of_sqrt;
         let upper_bound_of_sqrt_squared = upper_bound_of_sqrt * upper_bound_of_sqrt;
 
-        if upper_bound_of_sqrt <= 0.into() {
+        if upper_bound_of_sqrt <= 0 {
             // both will be negative, so only the negative discriminant will be useful in the non-squared case
             return lower_bound_of_sqrt_squared >= discriminant
                 && discriminant >= upper_bound_of_sqrt_squared;
         }
 
-        if lower_bound_of_sqrt >= 0.into() {
+        if lower_bound_of_sqrt >= 0 {
             // both will be positive, so only the positive discriminant will be useful in the non-squared case
             return lower_bound_of_sqrt_squared <= discriminant
                 && discriminant <= upper_bound_of_sqrt_squared;

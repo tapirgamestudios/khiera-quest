@@ -141,14 +141,14 @@ struct Terrain {
 
 impl Terrain {
     fn gravity(&self, position: Vector2D<Number>) -> Vector2D<Number> {
-        (Vector2D::<Number>::from((130, 130)) - position).fast_normalise()
+        (Vector2D::<Number>::from((140, 110)) - position).fast_normalise() / 10
     }
 
     fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
         [
             Collider::Line(Line {
-                start: Vector2D::new(num!(100.0), num!(100.0)),
-                end: Vector2D::new(num!(150.0), num!(100.0)),
+                start: Vector2D::new(num!(0.0), num!(100.0)),
+                end: Vector2D::new(num!(400.0), num!(100.0)),
                 normal: Vector2D::new(num!(0.0), num!(-1.0)),
             }),
             Collider::Line(Line {
