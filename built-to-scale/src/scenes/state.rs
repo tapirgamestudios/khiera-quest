@@ -67,11 +67,11 @@ impl Display<'_, '_> {
             affine
         };
 
-        let aff = affine * AffineMatrix::from_translation(position);
+        let aff = AffineMatrix::from_translation(position) * affine;
 
         o.set_affine_matrix(AffineMatrixInstance::new(aff.to_object_wrapping()));
         o.show_affine(AffineMode::Affine);
-        o.set_position(position.floor());
+        o.set_position(aff.position().floor());
 
         o
     }
