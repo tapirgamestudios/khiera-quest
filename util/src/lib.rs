@@ -86,7 +86,6 @@ pub struct Line {
 }
 
 impl Line {
-    #[inline(never)]
     pub fn collides_circle(&self, circle: &Circle) -> bool {
         let closest_point = self.closest_point(circle.position);
 

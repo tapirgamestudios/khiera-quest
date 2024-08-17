@@ -127,16 +127,16 @@ impl Game {
         });
 
         // work out the gravity to use
-        let gravity_direction = colliders
+        let gravity_direction = (colliders
             .iter()
             .map(|collider| collider.closest_point(self.player.position))
-            .min_by_key(|&closest_point| {
-                (closest_point - self.player.position).magnitude_squared()
-            });
+            .min_by_key(|&closest_point| (closest_point - self.player.position).magnitude_squared())
+            .unwrap_or_default()
+            - self.player.position)
+            .fast_normalise();
 
         // todo, set the player angle
-        let gravity =
-            (gravity_direction.unwrap_or_default() - self.player.position).fast_normalise() / 10;
+        let gravity = gravity_direction / 10;
 
         self.player.speed += gravity;
 
