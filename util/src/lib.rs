@@ -1,5 +1,4 @@
 #![no_std]
-
 use agb_fixnum::{Num, Vector2D};
 
 pub type Number = Num<i32, 8>;
@@ -19,8 +18,15 @@ impl Collider {
 
     pub fn normal_circle(&self, circle: &Circle) -> Vector2D<Number> {
         match self {
-            Collider::Circle(this) => (circle.position - this.position).fast_normalise(),
-            Collider::Line(line) => line.normal,
+            Collider::Circle(this) => this.normal_point(circle.position),
+            Collider::Line(this) => this.normal,
+        }
+    }
+
+    pub fn overshoot(&self, circle: &Circle) -> Vector2D<Number> {
+        match self {
+            Collider::Circle(this) => this.overshoot_circle(circle),
+            Collider::Line(this) => this.overshoot_circle(circle),
         }
     }
 }
@@ -39,12 +45,24 @@ pub struct Circle {
 
 impl Circle {
     pub fn collides_circle(&self, circle: &Circle) -> bool {
-        (self.position - circle.position).magnitude_squared()
-            <= self.radius * self.radius + circle.radius * circle.radius
+        let distance = self.radius + circle.radius;
+
+        (self.position - circle.position).magnitude_squared() <= distance * distance
     }
 
     pub fn collides_line(&self, line: &Line) -> bool {
         line.collides_circle(self)
+    }
+
+    pub fn overshoot_circle(&self, circle: &Circle) -> Vector2D<Number> {
+        let distance = (circle.position - self.position).fast_magnitude();
+        let magnitude = self.radius + circle.radius - distance;
+
+        self.normal_point(circle.position) * magnitude
+    }
+
+    pub fn normal_point(&self, point: Vector2D<Number>) -> Vector2D<Number> {
+        (point - self.position).fast_normalise()
     }
 }
 
@@ -95,6 +113,24 @@ impl Line {
 
         // so need to check that the discriminant itself is less than either the upper bound squared or the lower bound squared
         discriminant <= upper_bound_of_sqrt_squared || discriminant <= lower_bound_of_sqrt_squared
+    }
+
+    pub fn overshoot_circle(&self, circle: &Circle) -> Vector2D<Number> {
+        // from https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
+        let x1 = self.start.x;
+        let x2 = self.end.x;
+        let x0 = circle.position.x;
+
+        let y1 = self.start.y;
+        let y2 = self.end.y;
+        let y0 = circle.position.y;
+
+        let line_length = (self.end - self.start).fast_magnitude();
+
+        let distance = ((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1).abs() / line_length;
+
+        let amount = circle.radius - distance;
+        self.normal * amount
     }
 }
 

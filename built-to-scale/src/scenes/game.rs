@@ -96,8 +96,12 @@ impl Game {
                 self.player.set_angle_from_normal(normal);
 
                 self.player.speed -= normal * normal.dot(self.player.speed);
+                let overshoot = collider.overshoot(&player_circle);
+
                 self.player.speed *= num!(0.8);
                 on_ground = true;
+
+                self.player.position += overshoot / 32;
             }
         }
         on_ground
@@ -146,24 +150,24 @@ impl Terrain {
 
     fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
         [
-            Collider::Line(Line {
-                start: Vector2D::new(num!(100.0), num!(100.0)),
-                end: Vector2D::new(num!(150.0), num!(100.0)),
-                normal: Vector2D::new(num!(0.0), num!(-1.0)),
-            }),
-            Collider::Line(Line {
-                start: Vector2D::new(num!(150.0), num!(100.0)),
-                end: Vector2D::new(num!(150.0), num!(150.0)),
-                normal: Vector2D::new(num!(1.0), num!(0.0)),
-            }),
-            Collider::Line(Line {
-                start: Vector2D::new(num!(150.0), num!(150.0)),
-                end: Vector2D::new(num!(100.0), num!(100.0)),
-                normal: Vector2D::new(num!(-0.7071067811865475), num!(0.7071067811865475)),
-            }),
+            // Collider::Line(Line {
+            //     start: Vector2D::new(num!(100.0), num!(100.0)),
+            //     end: Vector2D::new(num!(150.0), num!(100.0)),
+            //     normal: Vector2D::new(num!(0.0), num!(-1.0)),
+            // }),
+            // Collider::Line(Line {
+            //     start: Vector2D::new(num!(150.0), num!(100.0)),
+            //     end: Vector2D::new(num!(150.0), num!(150.0)),
+            //     normal: Vector2D::new(num!(1.0), num!(0.0)),
+            // }),
+            // Collider::Line(Line {
+            //     start: Vector2D::new(num!(150.0), num!(150.0)),
+            //     end: Vector2D::new(num!(100.0), num!(100.0)),
+            //     normal: Vector2D::new(num!(-0.7071067811865475), num!(0.7071067811865475)),
+            // }),
             Collider::Circle(Circle {
                 position: (140, 110).into(),
-                radius: 30.into(),
+                radius: 40.into(),
             }),
         ]
         .into_iter()
