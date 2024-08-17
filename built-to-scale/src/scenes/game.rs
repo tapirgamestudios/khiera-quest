@@ -37,6 +37,19 @@ impl Player {
         };
     }
 
+    fn update_facing(&mut self, direction: Vector2D<Number>) {
+        let target_angle = AffineMatrix {
+            a: -direction.y,
+            b: direction.x,
+            c: -direction.x,
+            d: -direction.y,
+            x: 0.into(),
+            y: 0.into(),
+        };
+
+        self.angle = target_angle;
+    }
+
     fn get_normal(&self) -> Vector2D<Number> {
         (self.angle.b, -self.angle.a).into()
     }
@@ -150,12 +163,12 @@ impl Game {
             - self.player.position)
             .fast_normalise();
 
-        // todo, set the player angle
         let gravity = gravity_direction / 10;
 
         self.player.speed += gravity;
 
         self.player.on_ground = self.handle_collider_collisions(&colliders);
+        self.player.update_facing(-gravity_direction);
 
         self.player.position += self.player.speed;
     }
@@ -224,6 +237,10 @@ impl Terrain {
             Collider::Circle(Circle {
                 position: Vector2D::new(num!(110.), num!(110.)),
                 radius: 10.into(),
+            }),
+            Collider::Circle(Circle {
+                position: Vector2D::new(num!(200.), num!(20.)),
+                radius: 70.into(),
             }),
         ]
         .into_iter()
