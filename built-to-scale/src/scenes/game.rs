@@ -39,7 +39,7 @@ struct Player {
     frame: usize,
 }
 
-const JUMP_SPEED: i32 = 3;
+const JUMP_SPEED: i32 = 5;
 
 impl Player {
     fn set_angle_from_normal(&mut self, normal: Vector2D<Number>) {
@@ -187,8 +187,6 @@ impl Game {
                 on_ground = true;
 
                 self.player.position += overshoot / 32;
-
-                self.player.speed *= num!(0.8);
             }
         }
         on_ground
@@ -222,6 +220,12 @@ impl Game {
 
         if self.handle_collider_collisions(&colliders) {
             self.player.state = PlayerState::OnGround;
+        }
+
+        if !self.player.is_on_ground() {
+            self.player.speed *= num!(0.9);
+        } else {
+            self.player.speed *= num!(0.8);
         }
 
         self.player.update_facing(-gravity_direction);
