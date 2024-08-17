@@ -51,6 +51,10 @@ impl Player {
             self.speed += rotated_acceleration;
         }
     }
+
+    fn rendered_position(&self) -> Vector2D<Number> {
+        self.position - (8, 8).into()
+    }
 }
 
 pub struct Game {
@@ -134,7 +138,7 @@ impl Scene for Game {
         display.display(
             resources::IDLE.sprite(0),
             &self.player.angle,
-            self.player.position,
+            self.player.rendered_position(),
         );
     }
 }
