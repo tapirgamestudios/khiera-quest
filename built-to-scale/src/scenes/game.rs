@@ -1,9 +1,12 @@
+use core::cmp::Ordering;
+
 use agb::{
     display::affine::AffineMatrix,
     fixnum::{num, Vector2D},
     input::ButtonController,
 };
 
+use alloc::vec::Vec;
 use util::{Circle, Collider, Line, Number};
 
 use crate::resources;
@@ -87,8 +90,7 @@ impl Game {
         //todo
     }
 
-    fn handle_collider_collisions(&mut self) -> bool {
-        let colliders = self.terrain.colliders(self.player.position);
+    fn handle_collider_collisions(&mut self, colliders: &[Collider]) -> bool {
         let player_circle = Circle {
             position: self.player.position,
             radius: 8.into(),
@@ -112,12 +114,33 @@ impl Game {
     }
 
     fn physics_frame(&mut self) {
+        let mut colliders = self
+            .terrain
+            .colliders(self.player.position)
+            .collect::<Vec<_>>();
+
+        // put the circles first
+        colliders.sort_unstable_by(|a, b| match (a, b) {
+            (Collider::Circle(_), _) => Ordering::Less,
+            (_, Collider::Circle(_)) => Ordering::Greater,
+            (_, _) => Ordering::Equal,
+        });
+
+        // work out the gravity to use
+        let gravity_direction = colliders
+            .iter()
+            .map(|collider| collider.closest_point(self.player.position))
+            .min_by_key(|&closest_point| {
+                (closest_point - self.player.position).magnitude_squared()
+            });
+
         // todo, set the player angle
-        let gravity = self.terrain.gravity(self.player.position);
+        let gravity =
+            (gravity_direction.unwrap_or_default() - self.player.position).fast_normalise() / 10;
 
         self.player.speed += gravity;
 
-        self.player.on_ground = self.handle_collider_collisions();
+        self.player.on_ground = self.handle_collider_collisions(&colliders);
 
         self.player.position += self.player.speed;
     }
@@ -148,30 +171,40 @@ struct Terrain {
 }
 
 impl Terrain {
-    fn gravity(&self, position: Vector2D<Number>) -> Vector2D<Number> {
-        (Vector2D::<Number>::from((140, 110)) - position).fast_normalise() / 10
-    }
-
     fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
         [
-            // Collider::Line(Line {
-            //     start: Vector2D::new(num!(100.0), num!(100.0)),
-            //     end: Vector2D::new(num!(150.0), num!(100.0)),
-            //     normal: Vector2D::new(num!(0.0), num!(-1.0)),
-            // }),
-            // Collider::Line(Line {
-            //     start: Vector2D::new(num!(150.0), num!(100.0)),
-            //     end: Vector2D::new(num!(150.0), num!(150.0)),
-            //     normal: Vector2D::new(num!(1.0), num!(0.0)),
-            // }),
-            // Collider::Line(Line {
-            //     start: Vector2D::new(num!(150.0), num!(150.0)),
-            //     end: Vector2D::new(num!(100.0), num!(100.0)),
-            //     normal: Vector2D::new(num!(-0.7071067811865475), num!(0.7071067811865475)),
-            // }),
+            Collider::Line(Line {
+                start: Vector2D::new(num!(110.0), num!(100.0)),
+                end: Vector2D::new(num!(140.0), num!(100.0)),
+                normal: Vector2D::new(num!(0.0), num!(-1.0)),
+            }),
             Collider::Circle(Circle {
-                position: (140, 110).into(),
-                radius: 40.into(),
+                position: Vector2D::new(num!(140.0), num!(110.0)),
+                radius: 10.into(),
+            }),
+            Collider::Line(Line {
+                start: Vector2D::new(num!(150.0), num!(110.0)),
+                end: Vector2D::new(num!(150.0), num!(140.0)),
+                normal: Vector2D::new(num!(1.0), num!(0.0)),
+            }),
+            Collider::Circle(Circle {
+                position: Vector2D::new(num!(140.), num!(140.)),
+                radius: 10.into(),
+            }),
+            Collider::Line(Line {
+                start: Vector2D::new(
+                    num!(140.0) - num!(7.071067811865475),
+                    num!(140.0) + num!(7.071067811865475),
+                ),
+                end: Vector2D::new(
+                    num!(110.0) - num!(7.071067811865475),
+                    num!(110.0) + num!(7.071067811865475),
+                ),
+                normal: Vector2D::new(num!(-0.7071067811865475), num!(0.7071067811865475)),
+            }),
+            Collider::Circle(Circle {
+                position: Vector2D::new(num!(110.), num!(110.)),
+                radius: 10.into(),
             }),
         ]
         .into_iter()

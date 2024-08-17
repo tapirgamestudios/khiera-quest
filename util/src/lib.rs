@@ -29,6 +29,13 @@ impl Collider {
             Collider::Line(this) => this.overshoot_circle(circle),
         }
     }
+
+    pub fn closest_point(&self, point: Vector2D<Number>) -> Vector2D<Number> {
+        match self {
+            Collider::Circle(this) => this.closest_point(point),
+            Collider::Line(this) => this.closest_point(point),
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -63,6 +70,10 @@ impl Circle {
 
     pub fn normal_point(&self, point: Vector2D<Number>) -> Vector2D<Number> {
         (point - self.position).fast_normalise()
+    }
+
+    pub fn closest_point(&self, point: Vector2D<Number>) -> Vector2D<Number> {
+        self.normal_point(point) * self.radius + self.position
     }
 }
 
@@ -131,6 +142,27 @@ impl Line {
 
         let amount = circle.radius - distance;
         self.normal * amount
+    }
+
+    pub fn closest_point(&self, point: Vector2D<Number>) -> Vector2D<Number> {
+        // translate so that we are working from the origin
+        let x = self.end - self.start;
+        let p = point - self.start;
+
+        let x_magnitude = x.fast_magnitude();
+
+        // closest point on the infinite line
+        let y = x / x_magnitude * (p.dot(x));
+
+        let discriminant = x.dot(y);
+
+        if discriminant < 0.into() {
+            self.start
+        } else if discriminant > 1.into() {
+            self.end
+        } else {
+            y + self.start
+        }
     }
 }
 
