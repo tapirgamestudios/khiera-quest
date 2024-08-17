@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 agb = { path = "../../agb/agb" }
-util = { path = "../util" }
+util = { path = "../util", features = ["agb"] }
 
 
 [profile.dev]

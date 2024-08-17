@@ -3,5 +3,10 @@ name = "util"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+agb = ["dep:agb"]
+
 [dependencies]
 agb_fixnum = { path = "../../agb/agb-fixnum" }
+
+agb = { path = "../../agb/agb", optional = true }

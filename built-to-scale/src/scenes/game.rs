@@ -1,8 +1,10 @@
 use agb::{
     display::affine::AffineMatrix,
     fixnum::{num, Vector2D},
+    input::ButtonController,
 };
-use util::{Circle, Collider, Number};
+
+use util::{Circle, Collider, Line, Number};
 
 use crate::resources;
 
@@ -141,14 +143,27 @@ struct Terrain {
 
 impl Terrain {
     fn gravity(&self, position: Vector2D<Number>) -> Vector2D<Number> {
-        (Vector2D::<Number>::from((100, 100)) - position).fast_normalise()
+        (Vector2D::<Number>::from((130, 130)) - position).fast_normalise()
     }
 
     fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
-        [Collider::Circle(Circle {
-            position: (100, 100).into(),
-            radius: 32.into(),
-        })]
+        [
+            Collider::Line(Line {
+                start: Vector2D::new(num!(100.0), num!(100.0)),
+                end: Vector2D::new(num!(150.0), num!(100.0)),
+                normal: Vector2D::new(num!(0.0), num!(-1.0)),
+            }),
+            Collider::Line(Line {
+                start: Vector2D::new(num!(150.0), num!(100.0)),
+                end: Vector2D::new(num!(150.0), num!(150.0)),
+                normal: Vector2D::new(num!(1.0), num!(0.0)),
+            }),
+            Collider::Line(Line {
+                start: Vector2D::new(num!(150.0), num!(150.0)),
+                end: Vector2D::new(num!(100.0), num!(100.0)),
+                normal: Vector2D::new(num!(-0.7071067811865475), num!(0.7071067811865475)),
+            }),
+        ]
         .into_iter()
     }
 }
