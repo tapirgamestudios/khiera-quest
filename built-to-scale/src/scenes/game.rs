@@ -89,7 +89,7 @@ impl Game {
             position: self.player.position,
             radius: 8.into(),
         };
-
+        let mut on_ground = false;
         for collider in colliders {
             if collider.collides_circle(&player_circle) {
                 let normal = collider.normal_circle(&player_circle);
@@ -97,10 +97,10 @@ impl Game {
 
                 self.player.speed -= normal * normal.dot(self.player.speed);
                 self.player.speed *= num!(0.8);
-                return true;
+                on_ground = true;
             }
         }
-        false
+        on_ground
     }
 
     fn physics_frame(&mut self) {
