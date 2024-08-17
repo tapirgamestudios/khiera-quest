@@ -1,9 +1,8 @@
 use std::{collections::HashMap, error::Error, path::Path};
 
-use proc_macro2::TokenStream;
 use quote::quote;
 use tiled::{Loader, Map};
-use util::{Circle, Collider, Number};
+use util::{Circle, Collider, Line, Number};
 
 pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let mut loader = Loader::new();
@@ -23,7 +22,21 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
                 })
             }
         }
-        Collider::Line(_) => todo!(),
+        Collider::Line(line) => {
+            let sx = line.start.x.to_raw();
+            let sy = line.start.y.to_raw();
+            let ex = line.end.x.to_raw();
+            let ey = line.end.y.to_raw();
+
+            let nx = line.normal.x.to_raw();
+            let ny = line.normal.y.to_raw();
+
+            quote! {Collider::Line(Line {
+                start: Vector2D::new(Number::from_raw(#sx), Number::from_raw(#sy)),
+                end: Vector2D::new(Number::from_raw(#ex), Number::from_raw(#ey)),
+                normal: Vector2D::new(Number::from_raw(#nx), Number::from_raw(#ny)),
+            })}
+        }
     });
 
     let mut phf = phf_codegen::Map::new();
@@ -135,7 +148,23 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
                     radius: Number::from_f32(*width / 2.),
                 }));
             }
-            tiled::ObjectShape::Polyline { points } => todo!(),
+            tiled::ObjectShape::Polyline { points } => {
+                for x in points.windows(2) {
+                    let [start, end] = x else { panic!() };
+                    let start = (start.0 + object.x, start.1 + object.y);
+                    let end = (end.0 + object.x, end.1 + object.y);
+                    let vector = (end.0 - start.0, end.1 - start.1);
+                    let magnitude = (vector.0 * vector.0 + vector.1 * vector.1).sqrt();
+                    let normal = (vector.0 / magnitude, vector.1 / magnitude);
+
+                    colliders.push(Collider::Line(Line {
+                        start: (Number::from_f32(start.0), Number::from_f32(start.1)).into(),
+                        end: (Number::from_f32(end.0), Number::from_f32(end.1)).into(),
+                        normal: (Number::from_f32(normal.1), Number::from_f32(-normal.0)).into(),
+                    }))
+                }
+            }
+
             tiled::ObjectShape::Polygon { points } => todo!(),
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
         }
