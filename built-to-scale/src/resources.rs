@@ -15,4 +15,4 @@ macro_rules! extract_statics {
     };
 }
 
-extract_statics!(SPRITES, [IDLE, WALK, JUMP]);
+extract_statics!(SPRITES, [IDLE, WALK, JUMP, FALL]);

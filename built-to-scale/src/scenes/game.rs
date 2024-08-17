@@ -1,7 +1,7 @@
 use core::cmp::Ordering;
 
 use agb::{
-    display::affine::AffineMatrix,
+    display::{affine::AffineMatrix, object::Sprite},
     fixnum::{num, Vector2D},
 };
 
@@ -16,11 +16,20 @@ struct Offset {
     space: AffineMatrix,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PlayerState {
+    OnGround,
+    Jumping,
+    Falling,
+}
+
 struct Player {
     angle: AffineMatrix,
     speed: Vector2D<Number>,
     position: Vector2D<Number>,
-    on_ground: bool,
+    state: PlayerState,
+
+    frame: usize,
 }
 
 const JUMP_SPEED: i32 = 3;
@@ -56,7 +65,7 @@ impl Player {
 
     fn handle_direction_input(&mut self, x: i32) {
         if x != 0 {
-            let acceleration: Vector2D<Number> = if self.on_ground {
+            let acceleration: Vector2D<Number> = if self.state == PlayerState::OnGround {
                 Vector2D::new(0.into(), Number::new(x) / 8)
             } else {
                 Vector2D::new(0.into(), Number::new(x) / 20)
@@ -75,16 +84,40 @@ impl Player {
     }
 
     fn handle_jump_input(&mut self) {
-        if self.on_ground {
+        if self.state == PlayerState::OnGround {
             let normal = self.get_normal();
 
             self.speed += normal * JUMP_SPEED;
             self.position += self.speed;
+
+            self.state = PlayerState::Jumping;
+            self.frame = 0;
         }
     }
 
     fn rendered_position(&self) -> Vector2D<Number> {
         self.position - (8, 8).into()
+    }
+
+    fn frame(&mut self) {
+        self.frame = self.frame.wrapping_add(1);
+        if self.state == PlayerState::Jumping && self.frame > 32 {
+            self.state = PlayerState::Falling;
+        }
+    }
+
+    fn sprite(&self) -> &'static Sprite {
+        match self.state {
+            PlayerState::OnGround => {
+                if self.speed.magnitude_squared() < num!(0.1) {
+                    resources::IDLE.sprite(0)
+                } else {
+                    resources::WALK.animation_sprite(self.frame / 16)
+                }
+            }
+            PlayerState::Jumping => resources::JUMP.animation_sprite(self.frame / 16),
+            PlayerState::Falling => resources::FALL.sprite(0),
+        }
     }
 }
 
@@ -104,7 +137,9 @@ impl Game {
                 angle: AffineMatrix::identity(),
                 speed: (0, 0).into(),
                 position: (0, 0).into(),
-                on_ground: false,
+                state: PlayerState::Falling,
+
+                frame: 0,
             },
             terrain: Terrain {},
         }
@@ -167,7 +202,10 @@ impl Game {
 
         self.player.speed += gravity;
 
-        self.player.on_ground = self.handle_collider_collisions(&colliders);
+        if self.handle_collider_collisions(&colliders) {
+            self.player.state = PlayerState::OnGround;
+        }
+
         self.player.update_facing(-gravity_direction);
 
         self.player.position += self.player.speed;
@@ -187,11 +225,13 @@ impl Scene for Game {
         if update.jump_just_pressed() {
             self.handle_jump_input();
         }
+
+        self.player.frame();
     }
 
     fn display(&mut self, display: &mut super::Display) {
         display.display(
-            resources::IDLE.sprite(0),
+            self.player.sprite(),
             &self.player.angle,
             self.player.rendered_position(),
         );
