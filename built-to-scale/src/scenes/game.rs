@@ -63,10 +63,10 @@ impl Game {
     pub fn new() -> Self {
         Self {
             screen_space_offset: Offset {
-                space: AffineMatrix::from_rotation::<8>(0.into()),
+                space: AffineMatrix::identity(),
             },
             player: Player {
-                angle: AffineMatrix::from_rotation::<8>(0.into()),
+                angle: AffineMatrix::identity(),
                 speed: (0, 0).into(),
                 position: (0, 0).into(),
                 on_ground: false,
