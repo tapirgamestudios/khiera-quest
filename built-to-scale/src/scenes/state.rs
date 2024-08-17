@@ -48,11 +48,27 @@ impl Display<'_, '_> {
     pub fn object(
         &mut self,
         sprite: &'static Sprite,
-        affine: &AffineMatrix,
+        affine: AffineMatrix,
         position: Vector2D<Number>,
+        hflip: bool,
     ) -> ObjectUnmanaged {
         let mut o = ObjectUnmanaged::new(self.sprite_loader.get_vram_sprite(sprite));
-        let aff = *affine * AffineMatrix::from_translation(position);
+
+        let affine = if hflip {
+            AffineMatrix {
+                a: (-1).into(),
+                b: 0.into(),
+                c: 0.into(),
+                d: 1.into(),
+                x: 0.into(),
+                y: 0.into(),
+            } * affine
+        } else {
+            affine
+        };
+
+        let aff = affine * AffineMatrix::from_translation(position);
+
         o.set_affine_matrix(AffineMatrixInstance::new(aff.to_object_wrapping()));
         o.show_affine(AffineMode::Affine);
         o.set_position(position.floor());
@@ -65,8 +81,9 @@ impl Display<'_, '_> {
         sprite: &'static Sprite,
         affine: &AffineMatrix,
         position: Vector2D<Number>,
+        hflip: bool,
     ) {
-        let object = self.object(sprite, affine, position);
+        let object = self.object(sprite, *affine, position, hflip);
         self.oam_iter.set_next(&object);
     }
 }

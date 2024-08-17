@@ -17,6 +17,12 @@ struct Offset {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PlayerFacing {
+    Left,
+    Right,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PlayerState {
     OnGround,
     Jumping,
@@ -28,6 +34,7 @@ struct Player {
     speed: Vector2D<Number>,
     position: Vector2D<Number>,
     state: PlayerState,
+    facing: PlayerFacing,
 
     frame: usize,
 }
@@ -65,7 +72,7 @@ impl Player {
 
     fn handle_direction_input(&mut self, x: i32) {
         if x != 0 {
-            let acceleration: Vector2D<Number> = if self.state == PlayerState::OnGround {
+            let acceleration: Vector2D<Number> = if self.is_on_ground() {
                 Vector2D::new(0.into(), Number::new(x) / 8)
             } else {
                 Vector2D::new(0.into(), Number::new(x) / 20)
@@ -80,11 +87,17 @@ impl Player {
                 .into();
 
             self.speed += rotated_acceleration;
+
+            if x < 0 {
+                self.facing = PlayerFacing::Left;
+            } else {
+                self.facing = PlayerFacing::Right;
+            }
         }
     }
 
     fn handle_jump_input(&mut self) {
-        if self.state == PlayerState::OnGround {
+        if self.is_on_ground() {
             let normal = self.get_normal();
 
             self.speed += normal * JUMP_SPEED;
@@ -104,6 +117,10 @@ impl Player {
         if self.state == PlayerState::Jumping && self.frame > 32 {
             self.state = PlayerState::Falling;
         }
+    }
+
+    fn is_on_ground(&self) -> bool {
+        self.state == PlayerState::OnGround
     }
 
     fn sprite(&self) -> &'static Sprite {
@@ -138,6 +155,7 @@ impl Game {
                 speed: (0, 0).into(),
                 position: (0, 0).into(),
                 state: PlayerState::Falling,
+                facing: PlayerFacing::Right,
 
                 frame: 0,
             },
@@ -234,6 +252,7 @@ impl Scene for Game {
             self.player.sprite(),
             &self.player.angle,
             self.player.rendered_position(),
+            self.player.facing != PlayerFacing::Right,
         );
     }
 }
