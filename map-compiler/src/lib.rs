@@ -5,20 +5,7 @@ use quote::quote;
 use tiled::{Loader, Map};
 use util::{Circle, Collider, Number};
 
-/// Compiles to
-/// ```
-/// const BOX_SIZE: i32 = ...;
-///
-/// static COLLIDERS: &[Collider] = &[
-///     ...
-/// ];
-///
-/// static COLLISION_LOOKUP: &[&[Collider]] = &[
-///     ...
-/// ]
-/// ```
-
-pub fn compile_map(path: impl AsRef<Path>) -> Result<TokenStream, Box<dyn Error>> {
+pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let mut loader = Loader::new();
     let map = loader.load_tmx_map(path)?;
     let colliders = extract_colliders(&map);
@@ -39,26 +26,28 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<TokenStream, Box<dyn Error>
         Collider::Line(_) => todo!(),
     });
 
-    let spacial_quote = spacial_colliders.iter().map(|(key, colliders)| {
+    let mut phf = phf_codegen::Map::new();
+
+    for (key, colliders) in spacial_colliders.iter() {
         let x = key.0;
         let y = key.1;
-        let colliders = colliders.iter().map(|idx| quote! {&COLLIDERS[idx]});
+        let colliders = colliders.iter().map(|idx| quote! { &COLLIDERS [#idx] });
+        let entry = quote! {&[#(#colliders),*]}.to_string();
+        phf.entry([x, y], &entry);
+    }
 
-        quote! {[#x, #y] => &[#(#colliders),*]}
-    });
+    let build = phf.build();
+    Ok(format!(
+        "{}{};",
+        quote! {
+            pub const BOX_SIZE: i32 = #BOX_SIZE;
 
-    Ok(quote! {
+            static COLLIDERS: &[Collider] = &[#(#colliders_quote),*];
 
-        use util::*;
-
-        const BOX_SIZE: i32 = #BOX_SIZE;
-
-        static COLLIDERS: &[Collider] = &[#(#colliders_quote),*];
-
-        pub static NEARBY_COLLIDERS: phf::Map<[i32; 2], &'static [&'static Collider]> = phf::phf_map! {
-            #(#spacial_quote),*
-        };
-    })
+            pub static NEARBY_COLLIDERS: phf::Map<[i32; 2], &'static [&'static Collider]> =
+        },
+        build
+    ))
 }
 
 const BOX_SIZE: i32 = 128;
@@ -82,7 +71,11 @@ where
             };
             for x in min_box_x..=max_box_x {
                 for y in min_box_y..=max_box_y {
-                    if in_circle(x, y) {
+                    if in_circle(x * BOX_SIZE, y * BOX_SIZE)
+                        || in_circle((x + 1) * BOX_SIZE, (y + 1) * BOX_SIZE)
+                        || ((x * BOX_SIZE)..((x + 1) * BOX_SIZE)).contains(&position.x)
+                        || ((y * BOX_SIZE)..((y + 1) * BOX_SIZE)).contains(&position.y)
+                    {
                         f(x, y)
                     }
                 }
@@ -131,7 +124,11 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
                     "width and height of ellipse must be the same, ie we must have a circle"
                 );
 
-                let position = (Number::from_f32(object.x), Number::from_f32(object.y)).into();
+                let position = (
+                    Number::from_f32(object.x + *width / 2.),
+                    Number::from_f32(object.y + *width / 2.),
+                )
+                    .into();
 
                 colliders.push(Collider::Circle(Circle {
                     position,

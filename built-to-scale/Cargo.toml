@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 agb = { path = "../../agb/agb" }
 util = { path = "../util", features = ["agb"] }
-
+map = { path = "../map" }
 
 [profile.dev]
 opt-level = 3

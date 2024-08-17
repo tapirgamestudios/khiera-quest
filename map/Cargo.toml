@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-phf = { version = "0.11.1", default-features = false }
+phf = { version = "0.11.1", default-features = false, features = ["macros"] }
 util = { path = "../util" }
+agb_fixnum = { path = "../../agb/agb-fixnum" }
 
 [build-dependencies]
 map-compiler = { path = "../map-compiler" }

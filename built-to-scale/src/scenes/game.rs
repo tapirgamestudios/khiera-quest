@@ -171,7 +171,7 @@ impl Game {
         self.player.handle_jump_input();
     }
 
-    fn handle_collider_collisions(&mut self, colliders: &[Collider]) -> bool {
+    fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> bool {
         let player_circle = Circle {
             position: self.player.position,
             radius: 8.into(),
@@ -262,46 +262,9 @@ struct Terrain {
 }
 
 impl Terrain {
-    fn colliders(&self, position: Vector2D<Number>) -> impl Iterator<Item = Collider> {
-        [
-            Collider::Line(Line {
-                start: Vector2D::new(num!(110.0), num!(100.0)),
-                end: Vector2D::new(num!(140.0), num!(100.0)),
-                normal: Vector2D::new(num!(0.0), num!(-1.0)),
-            }),
-            Collider::Circle(Circle {
-                position: Vector2D::new(num!(140.0), num!(110.0)),
-                radius: 10.into(),
-            }),
-            Collider::Line(Line {
-                start: Vector2D::new(num!(150.0), num!(110.0)),
-                end: Vector2D::new(num!(150.0), num!(140.0)),
-                normal: Vector2D::new(num!(1.0), num!(0.0)),
-            }),
-            Collider::Circle(Circle {
-                position: Vector2D::new(num!(140.), num!(140.)),
-                radius: 10.into(),
-            }),
-            Collider::Line(Line {
-                start: Vector2D::new(
-                    num!(140.0) - num!(7.071067811865475),
-                    num!(140.0) + num!(7.071067811865475),
-                ),
-                end: Vector2D::new(
-                    num!(110.0) - num!(7.071067811865475),
-                    num!(110.0) + num!(7.071067811865475),
-                ),
-                normal: Vector2D::new(num!(-0.7071067811865475), num!(0.7071067811865475)),
-            }),
-            Collider::Circle(Circle {
-                position: Vector2D::new(num!(110.), num!(110.)),
-                radius: 10.into(),
-            }),
-            Collider::Circle(Circle {
-                position: Vector2D::new(num!(200.), num!(20.)),
-                radius: 70.into(),
-            }),
-        ]
-        .into_iter()
+    fn colliders<'b>(&self, position: Vector2D<Number>) -> impl Iterator<Item = &'b Collider> {
+        map::get_nearby(position.x.floor(), position.y.floor())
+            .iter()
+            .copied()
     }
 }
