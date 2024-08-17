@@ -3,7 +3,6 @@ use core::cmp::Ordering;
 use agb::{
     display::affine::AffineMatrix,
     fixnum::{num, Vector2D},
-    input::ButtonController,
 };
 
 use alloc::vec::Vec;
@@ -24,6 +23,8 @@ struct Player {
     on_ground: bool,
 }
 
+const JUMP_SPEED: i32 = 3;
+
 impl Player {
     fn set_angle_from_normal(&mut self, normal: Vector2D<Number>) {
         self.angle = AffineMatrix {
@@ -42,7 +43,12 @@ impl Player {
 
     fn handle_direction_input(&mut self, x: i32) {
         if x != 0 {
-            let acceleration: Vector2D<Number> = Vector2D::new(0.into(), Number::new(x) / 8);
+            let acceleration: Vector2D<Number> = if self.on_ground {
+                Vector2D::new(0.into(), Number::new(x) / 8)
+            } else {
+                Vector2D::new(0.into(), Number::new(x) / 20)
+            };
+
             let normal = self.get_normal();
 
             let rotated_acceleration = (
@@ -52,6 +58,15 @@ impl Player {
                 .into();
 
             self.speed += rotated_acceleration;
+        }
+    }
+
+    fn handle_jump_input(&mut self) {
+        if self.on_ground {
+            let normal = self.get_normal();
+
+            self.speed += normal * JUMP_SPEED;
+            self.position += self.speed;
         }
     }
 
@@ -87,7 +102,7 @@ impl Game {
     }
 
     fn handle_jump_input(&mut self) {
-        //todo
+        self.player.handle_jump_input();
     }
 
     fn handle_collider_collisions(&mut self, colliders: &[Collider]) -> bool {
@@ -103,11 +118,11 @@ impl Game {
 
                 self.player.speed -= normal * normal.dot(self.player.speed);
                 let overshoot = collider.overshoot(&player_circle);
-
-                self.player.speed *= num!(0.8);
                 on_ground = true;
 
                 self.player.position += overshoot / 32;
+
+                self.player.speed *= num!(0.8);
             }
         }
         on_ground
@@ -155,6 +170,10 @@ impl Scene for Game {
         let button_press = update.button_x_tri();
         self.handle_direction_input(button_press as i32);
         self.physics_frame();
+
+        if update.jump_just_pressed() {
+            self.handle_jump_input();
+        }
     }
 
     fn display(&mut self, display: &mut super::Display) {

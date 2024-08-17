@@ -6,7 +6,7 @@ use agb::{
         },
     },
     fixnum::Vector2D,
-    input::{ButtonController, Tri},
+    input::{Button, ButtonController, Tri},
 };
 use util::Number;
 
@@ -23,6 +23,10 @@ impl<'a> Update<'a> {
 impl Update<'_> {
     pub fn button_x_tri(&self) -> Tri {
         self.button.x_tri()
+    }
+
+    pub fn jump_just_pressed(&self) -> bool {
+        self.button.is_just_pressed(Button::A)
     }
 }
 
