@@ -224,7 +224,7 @@ fn rounded_line_collider(
     let x_hat = x.normalize();
     let y_hat = y.normalize();
 
-    let c = (x_hat + y_hat).normalize() * radius / (1. - x_hat.dot(&y_hat)).sqrt();
+    let c = (x_hat + y_hat).normalize() * radius / ((1. - x_hat.dot(&y_hat)) / 2.).sqrt();
 
     let p1 = x_hat.dot(&c) * x_hat;
     let p2 = y_hat.dot(&c) * y_hat;
