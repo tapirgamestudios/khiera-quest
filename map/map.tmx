@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="3" nextobjectid="11">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="3" nextobjectid="13">
  <layer id="1" name="Planets" width="30" height="20">
   <data encoding="csv"/>
  </layer>
  <objectgroup id="2" name="Colliders">
-  <object id="10" x="0" y="88">
-   <polyline points="0,0 240,0"/>
+  <object id="12" x="21.5" y="84.25">
+   <polygon points="5.5,-61.25 61,-60.25 89.6664,0.893525 36.5,7"/>
   </object>
  </objectgroup>
 </map>

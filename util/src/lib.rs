@@ -1,4 +1,5 @@
 #![no_std]
+
 use agb_fixnum::{Num, Vector2D};
 
 pub type Number = Num<i32, 8>;
@@ -117,17 +118,18 @@ impl Line {
 
         let x_magnitude_sq = x.magnitude_squared();
 
-        // closest point on the infinite line
-        let y = x * p.dot(x) / x_magnitude_sq;
+        // if y = the point on the line closest to p, then x.y = x.p due to the projection
+        let discriminant = x.dot(p);
 
-        let discriminant = x.dot(y);
-
-        if discriminant < 0.into() {
+        if discriminant <= 0.into() {
             self.start
-        } else if discriminant > x_magnitude_sq {
+        } else if discriminant >= x_magnitude_sq {
             self.end
         } else {
-            y + self.start
+            // now we actually have to scale it. y = x.p * x / (x.x)
+            let offset = x * discriminant / x_magnitude_sq.floor();
+
+            self.start + offset.change_base()
         }
     }
 }

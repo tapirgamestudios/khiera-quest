@@ -10,3 +10,5 @@ bresenham = "0.1.1"
 quote = "1"
 proc-macro2 = "1"
 phf_codegen = "0.11.1"
+nalgebra = "0.33.0"
+agb_fixnum = { path = "../../agb/agb-fixnum" }
