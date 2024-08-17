@@ -1,14 +1,13 @@
-cargo-features = ["per-package-target"]
-
 [package]
 name = "agb_template"
 version = "0.1.0"
 authors = [""]
 edition = "2021"
-forced-target = "thumbv4t-none-eabi"
 
 [dependencies]
 agb = "0.20.5"
+util = { path = "../util" }
+
 
 [profile.dev]
 opt-level = 3
@@ -18,3 +17,5 @@ debug = true
 opt-level = 3
 lto = "fat"
 debug = true
+
+[workspace]

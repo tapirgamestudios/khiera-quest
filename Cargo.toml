@@ -1,4 +1,6 @@
 [workspace]
 resolver = "2"
 
-members = ["util", "built-to-scale"]
+members = ["util"]
+
+exclude = ["built-to-scale"]

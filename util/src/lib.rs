@@ -2,7 +2,12 @@
 
 use agb_fixnum::{Num, Vector2D};
 
-type Number = Num<i32, 8>;
+pub type Number = Num<i32, 8>;
+
+pub enum Collider {
+    Circle(Circle),
+    Line(Line),
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct RealSpace(pub Vector2D<Number>);
@@ -31,6 +36,7 @@ impl Circle {
 pub struct Line {
     pub start: Vector2D<Number>,
     pub end: Vector2D<Number>,
+    pub normal: Vector2D<Number>,
 }
 
 impl Line {
