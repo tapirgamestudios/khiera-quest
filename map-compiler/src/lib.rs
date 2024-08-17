@@ -150,7 +150,7 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
                     radius: Number::from_f32(*width / 2.),
                 }));
             }
-            tiled::ObjectShape::Polygon { points } => {
+            tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
                 let origin = Vector2::new(object.x, object.y);
                 let mut modified_points = Vec::new();
 
@@ -169,11 +169,13 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
                     do_line_work(*a, *o, *b);
                 }
 
-                do_line_work(
-                    points[points.len() - 2],
-                    points[points.len() - 1],
-                    points[0],
-                );
+                if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
+                    do_line_work(
+                        points[points.len() - 2],
+                        points[points.len() - 1],
+                        points[0],
+                    );
+                }
 
                 let mut current = modified_points[0].1;
 
@@ -183,24 +185,10 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
                     current = *next_start;
                 }
 
-                colliders.push(get_line_collider(current, modified_points[0].0));
+                if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
+                    colliders.push(get_line_collider(current, modified_points[0].0));
+                }
             }
-            // tiled::ObjectShape::Polyline { points } | tiled::ObjectShape::Polygon { points } => {
-            //     for x in points.windows(2) {
-            //         let [start, end] = x else { panic!() };
-            //         let start = (start.0 + object.x, start.1 + object.y);
-            //         let end = (end.0 + object.x, end.1 + object.y);
-            //         let vector = (end.0 - start.0, end.1 - start.1);
-            //         let magnitude = (vector.0 * vector.0 + vector.1 * vector.1).sqrt();
-            //         let normal = (vector.0 / magnitude, vector.1 / magnitude);
-
-            //         colliders.push(Collider::Line(Line {
-            //             start: (Number::from_f32(start.0), Number::from_f32(start.1)).into(),
-            //             end: (Number::from_f32(end.0), Number::from_f32(end.1)).into(),
-            //             normal: (Number::from_f32(normal.1), Number::from_f32(-normal.0)).into(),
-            //         }))
-            //     }
-            // }
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
         }
     }
