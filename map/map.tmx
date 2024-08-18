@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="7" nextobjectid="85">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="7" nextobjectid="86">
  <tileset firstgid="1" source="planets.tsx"/>
  <tileset firstgid="1025" source="platforms.tsx"/>
  <tileset firstgid="2049" source="planets2.tsx"/>
@@ -992,9 +992,6 @@
   </object>
  </objectgroup>
  <objectgroup id="4" name="Colliders No Gravity">
-  <object id="50" x="-8" y="8">
-   <polygon points="0,0 16,0 16,32 0,32"/>
-  </object>
   <object id="53" x="0" y="24">
    <polygon points="0,0 48,0 80,-16 104,-16 104,24 0,24"/>
   </object>
@@ -1034,9 +1031,10 @@
   <object id="84" x="228" y="-551.25">
    <polyline points="0,0 12.25,6"/>
   </object>
+  <object id="85" x="-8" y="8" width="16" height="40"/>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" x="-3" y="-170">
+  <object id="47" x="-1" y="-110.5">
    <point/>
   </object>
  </objectgroup>
