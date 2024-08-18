@@ -5,6 +5,7 @@ use tiled::{ChunkData, InfiniteTileLayer, Map, TileLayer};
 pub enum GameTileSet {
     Planets,
     Platforms,
+    Planets2,
 }
 
 pub struct TileSetting {
@@ -34,6 +35,7 @@ pub fn extract_tiles(map_tiles: &InfiniteTileLayer) -> HashMap<(i32, i32), Vec<T
                             chunk_data.push(TileSetting {
                                 tileset: match tile.get_tileset().name.as_str() {
                                     "planets" => GameTileSet::Planets,
+                                    "planets2" => GameTileSet::Planets2,
                                     "platforms" => GameTileSet::Platforms,
                                     name => panic!("Unknown tile set {name}"),
                                 },

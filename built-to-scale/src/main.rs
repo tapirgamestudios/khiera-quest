@@ -121,6 +121,7 @@ fn infinite_scroll_wrapper<'a>(
 
             let tileset = match map_tile_setting.map_tile_set {
                 map::MapTileSet::Planets => &resources::bg::planets,
+                map::MapTileSet::Planets2 => &resources::bg::planets2,
                 map::MapTileSet::Platforms => &resources::bg::platforms,
             };
 

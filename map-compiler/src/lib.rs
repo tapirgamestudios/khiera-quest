@@ -69,6 +69,9 @@ fn tiles_for_layer(map: &Map, name: &str) -> phf_codegen::Map<[i32; 2]> {
                         maptile_extract::GameTileSet::Platforms => {
                             quote!(super::MapTileSet::Platforms)
                         }
+                        maptile_extract::GameTileSet::Planets2 => {
+                            quote!(super::MapTileSet::Planets2)
+                        }
                     };
 
                     quote!(

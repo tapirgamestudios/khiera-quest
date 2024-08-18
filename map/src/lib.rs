@@ -23,6 +23,7 @@ pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
 #[derive(Clone, Copy)]
 pub enum MapTileSet {
     Planets,
+    Planets2,
     Platforms,
 }
 
