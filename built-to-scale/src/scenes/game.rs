@@ -1,7 +1,11 @@
 use core::cmp::Ordering;
 
 use agb::{
-    display::{affine::AffineMatrix, object::Sprite},
+    display::{
+        affine::AffineMatrix,
+        object::Sprite,
+        tiled::{AffineMap, VRamManager},
+    },
     fixnum::{num, Vector2D},
 };
 
@@ -10,7 +14,7 @@ use util::{Circle, Collider, Line, Number};
 
 use crate::resources;
 
-use super::Scene;
+use super::{Scene, Update};
 
 struct Offset {
     space: AffineMatrix,
@@ -232,6 +236,10 @@ impl Game {
 
         self.player.position += self.player.speed;
     }
+
+    fn update_map(&self, (affine_map, vram): (&mut AffineMap, &mut VRamManager)) {
+        todo!()
+    }
 }
 
 impl Scene for Game {
@@ -239,7 +247,7 @@ impl Scene for Game {
         None
     }
 
-    fn update(&mut self, update: &mut super::Update) {
+    fn update<'a>(&mut self, update: &'a mut Update<'a>) {
         let button_press = update.button_x_tri();
         self.handle_direction_input(button_press as i32);
         self.physics_frame();
@@ -249,6 +257,8 @@ impl Scene for Game {
         }
 
         self.player.frame();
+
+        self.update_map(update.affine_map());
     }
 
     fn display(&mut self, display: &mut super::Display) {
