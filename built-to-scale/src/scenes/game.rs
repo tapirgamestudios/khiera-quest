@@ -254,7 +254,7 @@ impl Game {
             self.player.speed *= num!(0.8);
         }
 
-        if self.player.speed.magnitude_squared() == 0.into() {
+        if self.player.speed.magnitude_squared() < num!(0.005) {
             self.player.speed = (0, 0).into();
         }
 
