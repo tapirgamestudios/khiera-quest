@@ -64,7 +64,7 @@ impl Circle {
     }
 
     pub fn overshoot_circle(&self, circle: &Circle) -> Vector2D<Number> {
-        let distance = (circle.position - self.position).fast_magnitude();
+        let distance = (circle.position - self.position).magnitude();
         let magnitude = self.radius + circle.radius - distance;
 
         self.normal_point(circle.position) * magnitude
