@@ -63,7 +63,11 @@ fn entry(mut gba: agb::Gba) -> ! {
         infinite_scroll_wrapper(platform_background, map::get_platform_tile_chunk);
 
     platform_scrolled_map.set_visible(true);
-    platform_scrolled_map.init(&mut vram, (-WIDTH / 2, -HEIGHT / 2).into(), &mut || {});
+    platform_scrolled_map.init(
+        &mut vram,
+        map::START_POINT.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
+        &mut || {},
+    );
 
     let vblank = VBlank::get();
 

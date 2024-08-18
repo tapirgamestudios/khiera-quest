@@ -134,12 +134,12 @@ impl Game {
     pub fn new() -> Self {
         Self {
             camera: Camera {
-                position: Vector2D::default(),
+                position: map::START_POINT,
             },
             player: Player {
                 angle: AffineMatrix::identity(),
                 speed: (0, 0).into(),
-                position: (0, 0).into(),
+                position: map::START_POINT,
                 state: PlayerState::Falling,
                 facing: PlayerFacing::Right,
 

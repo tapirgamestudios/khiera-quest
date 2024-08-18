@@ -1,8 +1,11 @@
 use std::{error::Error, path::Path};
 
+use agb_fixnum::Vector2D;
 use collider_extract::assemble_colliders;
+use proc_macro2::TokenStream;
 use quote::quote;
 use tiled::{Loader, Map, TileLayer};
+use util::Number;
 
 mod collider_extract;
 mod maptile_extract;
@@ -19,7 +22,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let planet_maptile_phf_code = planet_maptile_phf.build();
     let platform_maptile_phf_code = platform_maptile_phf.build();
     Ok(format!(
-        "{}\n\n{}{planet_maptile_phf_code};\n\n{}{platform_maptile_phf_code};",
+        "{}\n\n{}{planet_maptile_phf_code};\n\n{}{platform_maptile_phf_code};\n\n{}",
         assemble_colliders(&map),
         quote! {
             pub static PLANET_MAP_TILES: phf::Map<[i32; 2], &'static [super::MapTileSetting]> =
@@ -27,6 +30,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
         quote! {
             pub static PLATFORM_MAP_TILES: phf::Map<[i32; 2], &'static [super::MapTileSetting]> =
         },
+        get_start_point(&map),
     ))
 }
 
@@ -83,4 +87,20 @@ fn tiles_for_layer(map: &Map, name: &str) -> phf_codegen::Map<[i32; 2]> {
     }
 
     maptile_phf
+}
+
+fn get_start_point(map: &Map) -> TokenStream {
+    let layer = map
+        .layers()
+        .filter(|x| x.name == "Start")
+        .find_map(|x| x.as_object_layer())
+        .unwrap();
+    let start_object = layer.objects().next().unwrap();
+
+    let x = Number::from_f32(start_object.x).to_raw();
+    let y = Number::from_f32(start_object.y).to_raw();
+
+    quote! {
+        pub const START_POINT: Vector2D<Number> = Vector2D::new(Number::from_raw(#x), Number::from_raw(#y));
+    }
 }

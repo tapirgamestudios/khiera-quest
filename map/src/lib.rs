@@ -8,6 +8,8 @@ mod map {
     include!(concat!(env!("OUT_DIR"), "/map.rs"));
 }
 
+pub use map::START_POINT;
+
 pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
     let x = x / map::BOX_SIZE;
     let y = y / map::BOX_SIZE;
