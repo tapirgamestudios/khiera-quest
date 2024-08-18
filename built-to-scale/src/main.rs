@@ -45,12 +45,10 @@ fn entry(mut gba: agb::Gba) -> ! {
         RegularBackgroundSize::Background32x32,
         TileFormat::EightBpp,
     );
-    planet_background.set_visible(true);
 
     let mut planet_scrolled_map =
         infinite_scroll_wrapper(planet_background, map::get_planet_tile_chunk);
 
-    planet_scrolled_map.set_visible(true);
     planet_scrolled_map.init(
         &mut vram,
         START_POINT.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
@@ -62,12 +60,10 @@ fn entry(mut gba: agb::Gba) -> ! {
         RegularBackgroundSize::Background32x32,
         TileFormat::EightBpp,
     );
-    platform_background.set_visible(true);
 
     let mut platform_scrolled_map =
         infinite_scroll_wrapper(platform_background, map::get_platform_tile_chunk);
 
-    platform_scrolled_map.set_visible(true);
     platform_scrolled_map.init(
         &mut vram,
         map::START_POINT.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
@@ -89,7 +85,14 @@ fn entry(mut gba: agb::Gba) -> ! {
             );
         }
     }
+
+    planet_scrolled_map.commit(&mut vram);
+    star_background.commit(&mut vram);
+    platform_scrolled_map.commit(&mut vram);
+
+    planet_scrolled_map.set_visible(true);
     star_background.set_visible(true);
+    platform_scrolled_map.set_visible(true);
 
     let vblank = VBlank::get();
 
