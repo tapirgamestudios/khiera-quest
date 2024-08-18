@@ -4,7 +4,6 @@ use agb::{
         object::{
             AffineMatrixInstance, AffineMode, OamIterator, ObjectUnmanaged, Sprite, SpriteLoader,
         },
-        tiled::{AffineMap, MapLoan, VRamManager},
     },
     fixnum::Vector2D,
     input::{Button, ButtonController, Tri},
@@ -13,26 +12,23 @@ use util::Number;
 
 pub struct Update<'a> {
     button: &'a ButtonController,
-
-    planet_background: &'a mut AffineMap,
-    vram_manager: &'a mut VRamManager,
+    new_pos: Option<Vector2D<i32>>,
 }
 
 impl<'a> Update<'a> {
-    pub fn new(
-        button: &'a ButtonController,
-        planet_background: &'a mut AffineMap,
-        vram_manager: &'a mut VRamManager,
-    ) -> Self {
+    pub fn new(button: &'a ButtonController) -> Self {
         Self {
             button,
-            planet_background,
-            vram_manager,
+            new_pos: None,
         }
     }
 
-    pub fn affine_map(&'a mut self) -> (&'a mut AffineMap, &'a mut VRamManager) {
-        (self.planet_background, self.vram_manager)
+    pub fn set_pos(&mut self, new_pos: Vector2D<i32>) {
+        self.new_pos = Some(new_pos);
+    }
+
+    pub fn new_pos(&self) -> Option<Vector2D<i32>> {
+        self.new_pos
     }
 }
 

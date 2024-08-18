@@ -1,16 +1,12 @@
 use core::cmp::Ordering;
 
 use agb::{
-    display::{
-        affine::AffineMatrix,
-        object::Sprite,
-        tiled::{AffineMap, TiledMap, VRamManager},
-    },
-    fixnum::{num, Rect, Vector2D},
+    display::{affine::AffineMatrix, object::Sprite, HEIGHT, WIDTH},
+    fixnum::{num, Vector2D},
 };
 
 use alloc::vec::Vec;
-use util::{Circle, Collider, ColliderKind, Line, Number};
+use util::{Circle, Collider, ColliderKind, Number};
 
 use crate::resources;
 
@@ -18,16 +14,6 @@ use super::{Scene, Update};
 
 struct Offset {
     space: AffineMatrix,
-}
-impl Offset {
-    fn center(&self) -> Vector2D<Number> {
-        (self.space.x, self.space.y).into()
-    }
-
-    fn set_center(&mut self, new_center: Vector2D<Number>) {
-        self.space.x = new_center.x;
-        self.space.y = new_center.y;
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -156,11 +142,7 @@ pub struct Game {
     screen_space_offset: Offset,
     player: Player,
     terrain: Terrain,
-
-    has_drawn_background: bool,
 }
-
-const CHUNK_SIZE: i32 = 8;
 
 impl Game {
     pub fn new() -> Self {
@@ -178,7 +160,6 @@ impl Game {
                 frame: 0,
             },
             terrain: Terrain {},
-            has_drawn_background: false,
         }
     }
 
@@ -272,54 +253,6 @@ impl Game {
 
         self.player.position += self.player.speed;
     }
-
-    fn update_map(&mut self, (affine_map, vram): (&mut AffineMap, &mut VRamManager)) {
-        self.screen_space_offset.set_center(self.player.position);
-
-        // 145 = ceil(hypot(WIDTH / 2, HEIGHT / 2))
-        const SCREEN_RADIUS: i32 = 145;
-        let min_pos =
-            self.screen_space_offset.center().floor() - (SCREEN_RADIUS, SCREEN_RADIUS).into();
-        let max_pos =
-            self.screen_space_offset.center().floor() + (SCREEN_RADIUS, SCREEN_RADIUS).into();
-
-        // divide by 8 for the tile size
-        let min_chunk = min_pos / 8 / CHUNK_SIZE;
-        let max_chunk = max_pos / 8 / CHUNK_SIZE;
-
-        let rendered_bounds = Rect::new(min_chunk, max_chunk - min_chunk);
-
-        for chunk in rendered_bounds.iter() {
-            let map_offset = Vector2D::from(chunk) * CHUNK_SIZE;
-
-            self.render_chunk(affine_map, vram, chunk, map_offset);
-        }
-
-        affine_map.set_transform(self.screen_space_offset.space.try_to_background().unwrap());
-    }
-
-    fn render_chunk(
-        &self,
-        affine_map: &mut AffineMap,
-        vram: &mut VRamManager,
-        chunk: (i32, i32),
-        map_offset: Vector2D<i32>,
-    ) {
-        let chunk = map::get_tile_chunk(chunk.0, chunk.1);
-
-        for y in 0..CHUNK_SIZE {
-            for x in 0..CHUNK_SIZE {
-                let pos = map_offset + (x as u16, y as u16).into();
-
-                affine_map.set_tile(
-                    vram,
-                    Vector2D::new(pos.x.rem_euclid(64) as u16, pos.y.rem_euclid(64) as u16),
-                    &resources::bg::planets.tiles,
-                    chunk[(x + y * CHUNK_SIZE) as usize],
-                );
-            }
-        }
-    }
 }
 
 impl Scene for Game {
@@ -327,7 +260,7 @@ impl Scene for Game {
         None
     }
 
-    fn update<'a>(&mut self, update: &'a mut Update<'a>) {
+    fn update(&mut self, update: &mut Update) {
         let button_press = update.button_x_tri();
         self.handle_direction_input(button_press as i32);
         self.physics_frame();
@@ -338,14 +271,14 @@ impl Scene for Game {
 
         self.player.frame();
 
-        self.update_map(update.affine_map());
+        update.set_pos(self.player.position.floor() - (WIDTH / 2, HEIGHT / 2).into());
     }
 
     fn display(&mut self, display: &mut super::Display) {
         display.display(
             self.player.sprite(),
             &self.player.angle,
-            self.player.rendered_position(),
+            (WIDTH / 2 - 8, HEIGHT / 2 - 8).into(),
             self.player.facing != PlayerFacing::Right,
         );
     }

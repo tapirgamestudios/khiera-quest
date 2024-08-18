@@ -9,7 +9,7 @@ enum TransitionScene {}
 
 trait Scene {
     fn transition(&mut self, transition: &mut Transition) -> Option<TransitionScene>;
-    fn update<'a>(&mut self, update: &'a mut Update<'a>);
+    fn update(&mut self, update: &mut Update);
     fn display(&mut self, display: &mut Display);
 }
 
@@ -20,7 +20,7 @@ impl SceneManager {
         }
     }
 
-    pub fn frame<'a>(&mut self, update: &'a mut Update<'a>) {
+    pub fn frame(&mut self, update: &mut Update) {
         self.current_scene.update(update);
     }
 
