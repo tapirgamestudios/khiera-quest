@@ -61,7 +61,7 @@ impl Player {
             let acceleration: Vector2D<Number> = if self.is_on_ground() {
                 Vector2D::new(0.into(), Number::new(x) / 8)
             } else {
-                Vector2D::new(0.into(), Number::new(x) / 20)
+                Vector2D::new(0.into(), Number::new(x) / 10)
             };
 
             let normal = self.get_normal();
