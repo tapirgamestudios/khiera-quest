@@ -84,7 +84,15 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
 
     for object in layer.objects() {
         match &object.shape {
-            tiled::ObjectShape::Rect { width, height } => todo!(),
+            tiled::ObjectShape::Rect { width, height } => {
+                handle_points_for_collider(
+                    object,
+                    &[(0., 0.), (*width, 0.), (*width, *height), (0., *height)],
+                    &mut colliders,
+                    gravitational,
+                    true,
+                );
+            }
             tiled::ObjectShape::Ellipse { width, height } => {
                 assert_eq!(
                     width, height,
@@ -106,7 +114,13 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
                 });
             }
             tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
-                handle_points_for_collider(object, points, &mut colliders, gravitational)
+                handle_points_for_collider(
+                    object,
+                    points,
+                    &mut colliders,
+                    gravitational,
+                    matches!(&object.shape, tiled::ObjectShape::Polygon { .. }),
+                );
             }
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
         }
@@ -120,6 +134,7 @@ fn handle_points_for_collider(
     points: &[(f32, f32)],
     colliders: &mut Vec<Collider>,
     gravitational: bool,
+    is_polygon: bool,
 ) {
     let origin = Vector2::new(object.x, object.y);
     if points.len() == 2 {
@@ -149,7 +164,7 @@ fn handle_points_for_collider(
         do_line_work(*a, *o, *b);
     }
 
-    if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
+    if is_polygon {
         do_line_work(
             points[points.len() - 2],
             points[points.len() - 1],
@@ -164,7 +179,7 @@ fn handle_points_for_collider(
         current = *next_start;
     }
 
-    if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
+    if is_polygon {
         colliders.extend(get_line_colliders(
             current,
             modified_points[0].0,
