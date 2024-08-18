@@ -84,6 +84,7 @@ pub struct Line {
     pub start: Vector2D<Number>,
     pub end: Vector2D<Number>,
     pub normal: Vector2D<Number>,
+    pub length: Number,
 }
 
 impl Line {
@@ -103,9 +104,7 @@ impl Line {
         let y2 = self.end.y;
         let y0 = circle.position.y;
 
-        let line_length = (self.end - self.start).fast_magnitude();
-
-        let distance = ((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1).abs() / line_length;
+        let distance = ((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1).abs() / self.length;
 
         let amount = circle.radius - distance;
         self.normal * amount
@@ -116,7 +115,7 @@ impl Line {
         let x = self.end - self.start;
         let p = point - self.start;
 
-        let x_magnitude_sq = x.magnitude_squared();
+        let x_magnitude_sq = self.length * self.length;
 
         // if y = the point on the line closest to p, then x.y = x.p due to the projection
         let discriminant = x.dot(p);

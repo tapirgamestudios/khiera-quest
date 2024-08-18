@@ -172,10 +172,12 @@ fn to_vec(a: Vector2<f32>) -> Vector2D<Number> {
 fn get_line_collider(start: Vector2<f32>, end: Vector2<f32>) -> Collider {
     let normalized = (end - start).normalize();
     let normal = Vector2::new(normalized.y, -normalized.x);
+    let length = (start - end).magnitude();
 
     Collider::Line(Line {
         start: to_vec(start),
         end: to_vec(end),
         normal: to_vec(normal),
+        length: Number::from_f32(length),
     })
 }

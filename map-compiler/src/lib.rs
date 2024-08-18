@@ -37,10 +37,13 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
             let nx = line.normal.x.to_raw();
             let ny = line.normal.y.to_raw();
 
+            let length = line.length.to_raw();
+
             quote! {Collider::Line(Line {
                 start: Vector2D::new(Number::from_raw(#sx), Number::from_raw(#sy)),
                 end: Vector2D::new(Number::from_raw(#ex), Number::from_raw(#ey)),
                 normal: Vector2D::new(Number::from_raw(#nx), Number::from_raw(#ny)),
+                length: Number::from_raw(#length),
             })}
         }
     });
