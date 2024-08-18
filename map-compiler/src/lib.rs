@@ -53,7 +53,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
                     length: Number::from_raw(#length),
                 })}
             }
-            ColliderKind::Segment(s) => {
+            ColliderKind::Arc(s) => {
                 let center = quote_vec(s.circle.position);
                 let r = s.circle.radius.to_raw();
                 let circle = quote! {
@@ -67,7 +67,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
                 let end_pos = quote_vec(s.end_pos);
 
                 quote! {
-                    ColliderKind::Segment(Segment {
+                    ColliderKind::Arc(Arc {
                         circle: #circle,
                         start_pos: #start_pos,
                         end_pos: #end_pos,

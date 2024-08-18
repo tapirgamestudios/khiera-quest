@@ -8,7 +8,7 @@ pub type Number = Num<i32, 8>;
 pub enum ColliderKind {
     Circle(Circle),
     Line(Line),
-    Segment(Segment),
+    Arc(Arc),
 }
 
 #[derive(Clone, Debug)]
@@ -22,7 +22,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.collides_circle(circle),
             ColliderKind::Line(this) => this.collides_circle(circle),
-            ColliderKind::Segment(this) => this.collides_circle(circle),
+            ColliderKind::Arc(this) => this.collides_circle(circle),
         }
     }
 
@@ -30,7 +30,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.normal_point(circle.position),
             ColliderKind::Line(this) => this.normal,
-            ColliderKind::Segment(this) => this.normal_point(circle.position),
+            ColliderKind::Arc(this) => this.normal_point(circle.position),
         }
     }
 
@@ -38,7 +38,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.overshoot_circle(circle),
             ColliderKind::Line(this) => this.overshoot_circle(circle),
-            ColliderKind::Segment(this) => this.overshoot_circle(circle),
+            ColliderKind::Arc(this) => this.overshoot_circle(circle),
         }
     }
 
@@ -46,7 +46,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.closest_point(point),
             ColliderKind::Line(this) => this.closest_point(point),
-            ColliderKind::Segment(this) => this.closest_point(point),
+            ColliderKind::Arc(this) => this.closest_point(point),
         }
     }
 }
@@ -145,28 +145,48 @@ impl Line {
 }
 
 #[derive(Clone, Debug)]
-pub struct Segment {
+pub struct Arc {
     pub circle: Circle,
 
     // unit vectors pointing in the direction of the start and end of the segment
     pub start_pos: Vector2D<Number>,
     pub end_pos: Vector2D<Number>,
 }
-impl Segment {
+impl Arc {
     fn collides_circle(&self, circle: &Circle) -> bool {
-        todo!()
+        let closest_point = self.closest_point(circle.position);
+        (closest_point - circle.position).magnitude_squared() < circle.radius * circle.radius
     }
 
     fn normal_point(&self, position: Vector2D<Num<i32, 8>>) -> Vector2D<Num<i32, 8>> {
-        todo!()
+        -self.circle.normal_point(position)
     }
 
     fn overshoot_circle(&self, circle: &Circle) -> Vector2D<Num<i32, 8>> {
-        todo!()
+        let distance = (circle.position - self.circle.position).magnitude();
+        let magnitude = distance + circle.radius - self.circle.radius;
+
+        self.normal_point(circle.position) * magnitude
     }
 
     fn closest_point(&self, point: Vector2D<Num<i32, 8>>) -> Vector2D<Num<i32, 8>> {
-        todo!()
+        let closest_circle_point = self.circle.closest_point(point) - self.circle.position;
+
+        let axc = self.start_pos.cross(self.end_pos);
+        let axb = self.start_pos.cross(closest_circle_point);
+        let cxb = self.end_pos.cross(closest_circle_point);
+        let cxa = self.end_pos.cross(self.start_pos);
+
+        self.circle.position
+            + if axb * axc >= 0.into() && cxb * cxa >= 0.into() {
+                closest_circle_point
+            } else if closest_circle_point.dot(self.start_pos)
+                > closest_circle_point.dot(self.end_pos)
+            {
+                self.start_pos * self.circle.radius
+            } else {
+                self.end_pos * self.circle.radius
+            }
     }
 }
 
