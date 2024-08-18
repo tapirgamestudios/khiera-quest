@@ -17,8 +17,8 @@ pub fn extract_tiles(map: &Map) -> HashMap<(i32, i32), Vec<u16>> {
     for (chunk_pos, chunk) in map_tiles.chunks() {
         let mut chunk_data = vec![];
 
-        for x in 0..ChunkData::WIDTH as i32 {
-            for y in 0..ChunkData::HEIGHT as i32 {
+        for y in 0..ChunkData::HEIGHT as i32 {
+            for x in 0..ChunkData::WIDTH as i32 {
                 if let Some(tile) = chunk.get_tile(x, y) {
                     chunk_data.push(tile.id() as u16);
                 } else {

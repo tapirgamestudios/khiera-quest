@@ -1,6 +1,14 @@
-use agb::{display::object::Graphics, include_aseprite};
+use agb::{display::object::Graphics, include_aseprite, include_background_gfx};
 
 static SPRITES: &Graphics = include_aseprite!("gfx/astronaut.aseprite");
+
+include_background_gfx!(backgrounds, "000000", dummy => "gfx/sprites.aseprite", planets => 256 "gfx/background.aseprite");
+
+pub mod bg {
+    use super::backgrounds;
+
+    pub use backgrounds::*;
+}
 
 macro_rules! extract_statics {
     (

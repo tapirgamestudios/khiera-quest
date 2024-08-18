@@ -146,6 +146,8 @@ pub struct Game {
     screen_space_offset: Offset,
     player: Player,
     terrain: Terrain,
+
+    has_drawn_background: bool,
 }
 
 impl Game {
@@ -164,6 +166,7 @@ impl Game {
                 frame: 0,
             },
             terrain: Terrain {},
+            has_drawn_background: false,
         }
     }
 
@@ -235,7 +238,35 @@ impl Game {
     }
 
     fn update_map(&self, (affine_map, vram): (&mut AffineMap, &mut VRamManager)) {
-        todo!()
+        const X_TILES: i32 = 30;
+        const Y_TILES: i32 = 20;
+
+        const CHUNK_WIDTH: i32 = 16;
+        const CHUNK_HEIGHT: i32 = 16;
+
+        for y in 0..Y_TILES {
+            for x in 0..X_TILES {
+                let x_chunk = x / CHUNK_WIDTH;
+                let y_chunk = y / CHUNK_HEIGHT;
+
+                let x_chunk_offset = x % CHUNK_WIDTH;
+                let y_chunk_offset = y % CHUNK_HEIGHT;
+
+                let tiles_for_chunk = map::get_tile_chunk(x_chunk, y_chunk);
+
+                let tile_id =
+                    tiles_for_chunk[(y_chunk_offset * CHUNK_WIDTH + x_chunk_offset) as usize];
+
+                agb::println!("{x_chunk} {y_chunk} {x_chunk_offset} {y_chunk_offset}");
+
+                affine_map.set_tile(
+                    vram,
+                    (x as u16, y as u16),
+                    &resources::bg::planets.tiles,
+                    tile_id,
+                );
+            }
+        }
     }
 }
 
@@ -255,7 +286,10 @@ impl Scene for Game {
 
         self.player.frame();
 
-        self.update_map(update.affine_map());
+        if !self.has_drawn_background {
+            self.update_map(update.affine_map());
+            self.has_drawn_background = true;
+        }
     }
 
     fn display(&mut self, display: &mut super::Display) {
