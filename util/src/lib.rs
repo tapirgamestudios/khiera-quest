@@ -147,8 +147,10 @@ impl Line {
 #[derive(Clone, Debug)]
 pub struct Segment {
     pub circle: Circle,
-    pub start_angle: Num<i32, 8>,
-    pub end_angle: Num<i32, 8>,
+
+    // unit vectors pointing in the direction of the start and end of the segment
+    pub start_pos: Vector2D<Number>,
+    pub end_pos: Vector2D<Number>,
 }
 impl Segment {
     fn collides_circle(&self, circle: &Circle) -> bool {

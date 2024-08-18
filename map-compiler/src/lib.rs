@@ -1,8 +1,10 @@
 use std::{error::Error, path::Path};
 
+use agb_fixnum::Vector2D;
+use proc_macro2::TokenStream;
 use quote::quote;
 use tiled::Loader;
-use util::ColliderKind;
+use util::{ColliderKind, Number};
 
 mod collider_extract;
 mod maptile_extract;
@@ -17,55 +19,58 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let tiles = maptile_extract::extract_tiles(&map);
 
     let colliders_quote = colliders.iter().map(|x| {
+        fn quote_vec(vector: Vector2D<Number>) -> TokenStream {
+            let x = vector.x.to_raw();
+            let y = vector.y.to_raw();
+
+            quote! {
+                Vector2D::new(Number::from_raw(#x), Number::from_raw(#y))
+            }
+        }
+
         let kind = match &x.kind {
             ColliderKind::Circle(c) => {
-                let x = c.position.x.to_raw();
-                let y = c.position.y.to_raw();
+                let position = quote_vec(c.position);
                 let r = c.radius.to_raw();
                 quote! {
                     ColliderKind::Circle(Circle {
-                        position: Vector2D::new(Number::from_raw(#x), Number::from_raw(#y)),
+                        position: #position,
                         radius: Number::from_raw(#r),
                     })
                 }
             }
             ColliderKind::Line(line) => {
-                let sx = line.start.x.to_raw();
-                let sy = line.start.y.to_raw();
-                let ex = line.end.x.to_raw();
-                let ey = line.end.y.to_raw();
-
-                let nx = line.normal.x.to_raw();
-                let ny = line.normal.y.to_raw();
+                let start = quote_vec(line.start);
+                let end = quote_vec(line.end);
+                let normal = quote_vec(line.normal);
 
                 let length = line.length.to_raw();
 
                 quote! {ColliderKind::Line(Line {
-                    start: Vector2D::new(Number::from_raw(#sx), Number::from_raw(#sy)),
-                    end: Vector2D::new(Number::from_raw(#ex), Number::from_raw(#ey)),
-                    normal: Vector2D::new(Number::from_raw(#nx), Number::from_raw(#ny)),
+                    start: #start,
+                    end: #end,
+                    normal: #normal,
                     length: Number::from_raw(#length),
                 })}
             }
             ColliderKind::Segment(s) => {
-                let x = s.circle.position.x.to_raw();
-                let y = s.circle.position.y.to_raw();
+                let center = quote_vec(s.circle.position);
                 let r = s.circle.radius.to_raw();
                 let circle = quote! {
                     ColliderKind::Circle(Circle {
-                        position: Vector2D::new(Number::from_raw(#x), Number::from_raw(#y)),
+                        position: #center,
                         radius: Number::from_raw(#r),
                     })
                 };
 
-                let start_angle = s.start_angle.to_raw();
-                let end_angle = s.end_angle.to_raw();
+                let start_pos = quote_vec(s.start_pos);
+                let end_pos = quote_vec(s.end_pos);
 
                 quote! {
                     ColliderKind::Segment(Segment {
                         circle: #circle,
-                        start_angle: Number::from_raw(#start_angle),
-                        end_angle: Number::from_raw(#end_angle),
+                        start_pos: #start_pos,
+                        end_pos: #end_pos,
                     })
                 }
             }
