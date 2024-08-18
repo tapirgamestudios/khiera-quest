@@ -187,8 +187,6 @@ impl Game {
     fn physics_frame(&mut self) {
         let colliders = self.terrain.colliders(self.player.position);
 
-        agb::println!("{}", colliders.len());
-
         // work out the gravity to use
         let gravity_source = colliders
             .iter()
