@@ -4,9 +4,9 @@ use agb::{
     display::{
         affine::AffineMatrix,
         object::Sprite,
-        tiled::{AffineMap, VRamManager},
+        tiled::{AffineMap, TiledMap, VRamManager},
     },
-    fixnum::{num, Vector2D},
+    fixnum::{num, Rect, Vector2D},
 };
 
 use alloc::vec::Vec;
@@ -18,6 +18,11 @@ use super::{Scene, Update};
 
 struct Offset {
     space: AffineMatrix,
+}
+impl Offset {
+    fn center(&self) -> Vector2D<Number> {
+        (self.space.x, self.space.y).into()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -150,6 +155,8 @@ pub struct Game {
     has_drawn_background: bool,
 }
 
+const CHUNK_SIZE: i32 = 8;
+
 impl Game {
     pub fn new() -> Self {
         Self {
@@ -261,30 +268,54 @@ impl Game {
     }
 
     fn update_map(&self, (affine_map, vram): (&mut AffineMap, &mut VRamManager)) {
-        const X_TILES: i32 = 30;
-        const Y_TILES: i32 = 20;
+        // 145 = ceil(hypot(WIDTH / 2, HEIGHT / 2))
+        const SCREEN_RADIUS: i32 = 145;
+        let min_pos =
+            self.screen_space_offset.center().floor() - (SCREEN_RADIUS, SCREEN_RADIUS).into();
+        let max_pos =
+            self.screen_space_offset.center().floor() + (SCREEN_RADIUS, SCREEN_RADIUS).into();
 
-        const CHUNK_WIDTH: i32 = 8;
-        const CHUNK_HEIGHT: i32 = 8;
+        // divide by 8 for the tile size
+        let min_chunk = min_pos / 8 / CHUNK_SIZE;
+        let max_chunk = max_pos / 8 / CHUNK_SIZE;
 
-        for y in 0..Y_TILES {
-            for x in 0..X_TILES {
-                let x_chunk = x / CHUNK_WIDTH;
-                let y_chunk = y / CHUNK_HEIGHT;
+        let rendered_bounds = Rect::new(min_chunk, max_chunk - min_chunk);
 
-                let x_chunk_offset = x % CHUNK_WIDTH;
-                let y_chunk_offset = y % CHUNK_HEIGHT;
+        for chunk in rendered_bounds.iter() {
+            let map_offset = (Vector2D::from(chunk) + max_chunk) * CHUNK_SIZE;
 
-                let tiles_for_chunk = map::get_tile_chunk(x_chunk, y_chunk);
+            self.render_chunk(
+                affine_map,
+                vram,
+                chunk,
+                Vector2D::new(
+                    map_offset.x.rem_euclid(64) as u16,
+                    map_offset.y.rem_euclid(64) as u16,
+                ),
+            );
+        }
 
-                let tile_id =
-                    tiles_for_chunk[(y_chunk_offset * CHUNK_WIDTH + x_chunk_offset) as usize];
+        affine_map.set_transform(self.screen_space_offset.space.try_to_background().unwrap());
+    }
+
+    fn render_chunk(
+        &self,
+        affine_map: &mut AffineMap,
+        vram: &mut VRamManager,
+        chunk: (i32, i32),
+        map_offset: Vector2D<u16>,
+    ) {
+        let chunk = map::get_tile_chunk(chunk.0, chunk.1);
+
+        for y in 0..CHUNK_SIZE {
+            for x in 0..CHUNK_SIZE {
+                let pos = map_offset + (x as u16, y as u16).into();
 
                 affine_map.set_tile(
                     vram,
-                    (x as u16, y as u16),
+                    pos,
                     &resources::bg::planets.tiles,
-                    tile_id,
+                    chunk[(x + y * CHUNK_SIZE) as usize],
                 );
             }
         }
