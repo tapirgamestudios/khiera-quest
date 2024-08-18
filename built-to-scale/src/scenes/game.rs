@@ -178,6 +178,24 @@ impl Game {
         self.player.handle_jump_input();
     }
 
+    fn speculate_collision_with_displacement(
+        &self,
+        colliders: &[&Collider],
+        displacement: Vector2D<Number>,
+    ) -> bool {
+        let player_circle = Circle {
+            position: self.player.position + displacement,
+            radius: 8.into(),
+        };
+        for collider in colliders {
+            if collider.collides_circle(&player_circle) {
+                return true;
+            }
+        }
+
+        false
+    }
+
     fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> bool {
         let mut on_ground = false;
         for collider in colliders {
@@ -219,8 +237,9 @@ impl Game {
             .fast_normalise();
 
         let gravity = gravity_direction / 10;
-
+        if !self.speculate_collision_with_displacement(&colliders, gravity) {
         self.player.speed += gravity;
+        }
 
         if self.handle_collider_collisions(&colliders) {
             self.player.state = PlayerState::OnGround;
