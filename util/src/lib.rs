@@ -8,6 +8,7 @@ pub type Number = Num<i32, 8>;
 pub enum ColliderKind {
     Circle(Circle),
     Line(Line),
+    Segment(Segment),
 }
 
 #[derive(Clone, Debug)]
@@ -21,6 +22,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.collides_circle(circle),
             ColliderKind::Line(this) => this.collides_circle(circle),
+            ColliderKind::Segment(this) => this.collides_circle(circle),
         }
     }
 
@@ -28,6 +30,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.normal_point(circle.position),
             ColliderKind::Line(this) => this.normal,
+            ColliderKind::Segment(this) => this.normal_point(circle.position),
         }
     }
 
@@ -35,6 +38,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.overshoot_circle(circle),
             ColliderKind::Line(this) => this.overshoot_circle(circle),
+            ColliderKind::Segment(this) => this.overshoot_circle(circle),
         }
     }
 
@@ -42,6 +46,7 @@ impl Collider {
         match &self.kind {
             ColliderKind::Circle(this) => this.closest_point(point),
             ColliderKind::Line(this) => this.closest_point(point),
+            ColliderKind::Segment(this) => this.closest_point(point),
         }
     }
 }
@@ -136,6 +141,30 @@ impl Line {
 
             self.start + offset.change_base()
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Segment {
+    pub circle: Circle,
+    pub start_angle: Num<i32, 8>,
+    pub end_angle: Num<i32, 8>,
+}
+impl Segment {
+    fn collides_circle(&self, circle: &Circle) -> bool {
+        todo!()
+    }
+
+    fn normal_point(&self, position: Vector2D<Num<i32, 8>>) -> Vector2D<Num<i32, 8>> {
+        todo!()
+    }
+
+    fn overshoot_circle(&self, circle: &Circle) -> Vector2D<Num<i32, 8>> {
+        todo!()
+    }
+
+    fn closest_point(&self, point: Vector2D<Num<i32, 8>>) -> Vector2D<Num<i32, 8>> {
+        todo!()
     }
 }
 

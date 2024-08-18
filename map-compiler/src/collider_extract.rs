@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use agb_fixnum::Vector2D;
 use nalgebra::Vector2;
 use tiled::{Map, ObjectLayer};
-use util::{Circle, Collider, ColliderKind, Line, Number};
+use util::{Circle, Collider, ColliderKind, Line, Number, Segment};
 
 use crate::BOX_SIZE;
 
@@ -12,7 +12,7 @@ where
     F: FnMut(i32, i32),
 {
     match &collider.kind {
-        ColliderKind::Circle(circle) => {
+        ColliderKind::Circle(circle) | ColliderKind::Segment(Segment { circle, .. }) => {
             let position = circle.position.floor();
             let radius = circle.radius.floor();
 

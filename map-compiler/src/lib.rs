@@ -47,6 +47,28 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
                     length: Number::from_raw(#length),
                 })}
             }
+            ColliderKind::Segment(s) => {
+                let x = s.circle.position.x.to_raw();
+                let y = s.circle.position.y.to_raw();
+                let r = s.circle.radius.to_raw();
+                let circle = quote! {
+                    ColliderKind::Circle(Circle {
+                        position: Vector2D::new(Number::from_raw(#x), Number::from_raw(#y)),
+                        radius: Number::from_raw(#r),
+                    })
+                };
+
+                let start_angle = s.start_angle.to_raw();
+                let end_angle = s.end_angle.to_raw();
+
+                quote! {
+                    ColliderKind::Segment(Segment {
+                        circle: #circle,
+                        start_angle: Number::from_raw(#start_angle),
+                        end_angle: Number::from_raw(#end_angle),
+                    })
+                }
+            }
         };
         let gravitational = x.gravitational;
         quote! {
