@@ -39,17 +39,6 @@ struct Player {
 const JUMP_SPEED: i32 = 5;
 
 impl Player {
-    fn set_angle_from_normal(&mut self, normal: Vector2D<Number>) {
-        self.angle = AffineMatrix {
-            a: -normal.y,
-            b: normal.x,
-            c: -normal.x,
-            d: -normal.y,
-            x: 0.into(),
-            y: 0.into(),
-        };
-    }
-
     fn update_facing(&mut self, direction: Vector2D<Number>) {
         let target_angle = AffineMatrix {
             a: -direction.y,
@@ -168,24 +157,6 @@ impl Game {
         self.player.handle_jump_input();
     }
 
-    fn speculate_collision_with_displacement(
-        &self,
-        colliders: &[&Collider],
-        displacement: Vector2D<Number>,
-    ) -> bool {
-        let player_circle = Circle {
-            position: self.player.position + displacement,
-            radius: 8.into(),
-        };
-        for collider in colliders {
-            if collider.collides_circle(&player_circle) {
-                return true;
-            }
-        }
-
-        false
-    }
-
     fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> bool {
         let mut on_ground = false;
         for collider in colliders {
@@ -236,7 +207,7 @@ impl Game {
         let gravity = gravity_direction / 10;
         self.player.speed += gravity;
 
-        if self.handle_collider_collisions(&colliders) {
+        if self.handle_collider_collisions(colliders) {
             self.player.state = PlayerState::OnGround;
         }
 
