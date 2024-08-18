@@ -215,21 +215,18 @@ fn get_3_and_first_gravity(
             );
         }
         if !this_container.iter().any(|&x| colliders[x].gravitational) {
-            // need to find a gravity somewhere
-            'outer: for (x, y) in SpiralIterator::new((x, y)) {
-                for &idx in spacial_colliders
-                    .get(&(x, y))
-                    .map(|x| x.as_slice())
-                    .unwrap_or_default()
+            let center_of_box = (x * BOX_SIZE + BOX_SIZE / 2, y * BOX_SIZE + BOX_SIZE / 2).into();
+            let (idx, _) = colliders
                     .iter()
-                {
-                    let collider = &colliders[idx];
-                    if collider.gravitational {
+                .enumerate()
+                .filter(|(_, x)| x.gravitational)
+                .map(|(idx, collider)| (idx, collider.closest_point(center_of_box)))
+                .min_by_key(|&(_, closest_point)| {
+                    (closest_point - center_of_box).magnitude_squared()
+                })
+                .unwrap();
+
                         this_container.insert(idx);
-                        break 'outer;
-                    }
-                }
-            }
         }
 
         let mut this_container_as_vec: Vec<_> = this_container.into_iter().collect();
