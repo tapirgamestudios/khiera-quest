@@ -5,6 +5,7 @@ use tiled::Loader;
 use util::Collider;
 
 mod collider_extract;
+mod maptile_extract;
 
 pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let mut loader = Loader::new();
@@ -41,17 +42,17 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
         }
     });
 
-    let mut phf = phf_codegen::Map::new();
+    let mut collider_phf = phf_codegen::Map::new();
 
     for (key, colliders) in spacial_colliders.iter() {
         let x = key.0;
         let y = key.1;
         let colliders = colliders.iter().map(|idx| quote! { &COLLIDERS [#idx] });
         let entry = quote! {&[#(#colliders),*]}.to_string();
-        phf.entry([x, y], &entry);
+        collider_phf.entry([x, y], &entry);
     }
 
-    let build = phf.build();
+    let collider_phf_code = collider_phf.build();
     Ok(format!(
         "{}{};",
         quote! {
@@ -61,7 +62,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
 
             pub static NEARBY_COLLIDERS: phf::Map<[i32; 2], &'static [&'static Collider]> =
         },
-        build
+        collider_phf_code
     ))
 }
 
