@@ -241,8 +241,8 @@ impl Game {
         const X_TILES: i32 = 30;
         const Y_TILES: i32 = 20;
 
-        const CHUNK_WIDTH: i32 = 16;
-        const CHUNK_HEIGHT: i32 = 16;
+        const CHUNK_WIDTH: i32 = 8;
+        const CHUNK_HEIGHT: i32 = 8;
 
         for y in 0..Y_TILES {
             for x in 0..X_TILES {

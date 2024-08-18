@@ -46,7 +46,7 @@ pub fn get_nearby(x: i32, y: i32) -> Vec<&'static Collider> {
     colliders
 }
 
-static ALL_TRANSPARENT: &[u16] = &[(1 << 10) - 1; 256];
+static ALL_TRANSPARENT: &[u16] = &[(1 << 10) - 1; 64];
 
 pub fn get_tile_chunk(x: i32, y: i32) -> &'static [u16] {
     match map::MAP_TILES.get(&[x, y]) {
