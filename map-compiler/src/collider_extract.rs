@@ -5,7 +5,7 @@ use nalgebra::{Vector2, Vector3};
 use tiled::{Map, ObjectLayer};
 use util::{Arc, Circle, Collider, ColliderKind, Line, Number};
 
-use crate::BOX_SIZE;
+pub const BOX_SIZE: i32 = 64;
 
 fn occupied_boxes<F>(collider: &Collider, mut f: F)
 where

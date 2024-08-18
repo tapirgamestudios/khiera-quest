@@ -1,6 +1,7 @@
 use std::{error::Error, path::Path};
 
 use agb_fixnum::Vector2D;
+use collider_extract::BOX_SIZE;
 use proc_macro2::TokenStream;
 use quote::quote;
 use tiled::Loader;
@@ -142,5 +143,3 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
         maptile_phf_code
     ))
 }
-
-const BOX_SIZE: i32 = 512;
