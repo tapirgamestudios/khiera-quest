@@ -74,6 +74,23 @@ fn entry(mut gba: agb::Gba) -> ! {
         &mut || {},
     );
 
+    let mut star_background = tiles.background(
+        Priority::P2,
+        RegularBackgroundSize::Background32x32,
+        TileFormat::FourBpp,
+    );
+    for y in 0..32u16 {
+        for x in 0..32u16 {
+            star_background.set_tile(
+                &mut vram,
+                (x, y),
+                &resources::bg::stars.tiles,
+                resources::bg::stars.tile_settings[(y * 32 + x) as usize],
+            );
+        }
+    }
+    star_background.set_visible(true);
+
     let vblank = VBlank::get();
 
     let mut button_controller = ButtonController::new();
@@ -97,6 +114,12 @@ fn entry(mut gba: agb::Gba) -> ! {
                 while platform_scrolled_map.set_pos(&mut vram, new_pos) != PartialUpdateStatus::Done
                 {
                 }
+
+                let star_pos = new_pos / 16;
+                star_background.set_scroll_pos((
+                    star_pos.x.rem_euclid(32 * 8) as i16,
+                    star_pos.y.rem_euclid(32 * 8) as i16,
+                ));
             }
         }
         vblank.wait_for_vblank();
@@ -104,6 +127,7 @@ fn entry(mut gba: agb::Gba) -> ! {
 
         planet_scrolled_map.commit(&mut vram);
         platform_scrolled_map.commit(&mut vram);
+        star_background.commit(&mut vram);
 
         tracker.step(&mut mixer);
         mixer.frame();

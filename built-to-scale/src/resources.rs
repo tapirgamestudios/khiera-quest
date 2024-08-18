@@ -7,6 +7,8 @@ include_background_gfx!(backgrounds, "000000",
     planets => 256 deduplicate "gfx/background.aseprite",
     planets2 => 256 deduplicate "gfx/background.aseprite",
     platforms => 256 deduplicate "gfx/platforms.aseprite",
+
+    stars => deduplicate "gfx/stars.aseprite",
 );
 
 pub mod bg {
