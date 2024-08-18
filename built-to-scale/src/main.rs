@@ -40,7 +40,7 @@ fn entry(mut gba: agb::Gba) -> ! {
 
     vram.set_background_palettes(resources::bg::PALETTES);
 
-    let mut planet_background = tiles.background(
+    let planet_background = tiles.background(
         Priority::P0,
         RegularBackgroundSize::Background32x32,
         TileFormat::EightBpp,
@@ -55,7 +55,7 @@ fn entry(mut gba: agb::Gba) -> ! {
         &mut || {},
     );
 
-    let mut platform_background = tiles.background(
+    let platform_background = tiles.background(
         Priority::P1,
         RegularBackgroundSize::Background32x32,
         TileFormat::EightBpp,
