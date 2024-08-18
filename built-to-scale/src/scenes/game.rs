@@ -257,8 +257,6 @@ impl Game {
                 let tile_id =
                     tiles_for_chunk[(y_chunk_offset * CHUNK_WIDTH + x_chunk_offset) as usize];
 
-                agb::println!("{x_chunk} {y_chunk} {x_chunk_offset} {y_chunk_offset}");
-
                 affine_map.set_tile(
                     vram,
                     (x as u16, y as u16),
