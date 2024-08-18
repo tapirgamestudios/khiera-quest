@@ -23,6 +23,11 @@ impl Offset {
     fn center(&self) -> Vector2D<Number> {
         (self.space.x, self.space.y).into()
     }
+
+    fn set_center(&mut self, new_center: Vector2D<Number>) {
+        self.space.x = new_center.x;
+        self.space.y = new_center.y;
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -267,7 +272,9 @@ impl Game {
         self.player.position += self.player.speed;
     }
 
-    fn update_map(&self, (affine_map, vram): (&mut AffineMap, &mut VRamManager)) {
+    fn update_map(&mut self, (affine_map, vram): (&mut AffineMap, &mut VRamManager)) {
+        self.screen_space_offset.set_center(self.player.position);
+
         // 145 = ceil(hypot(WIDTH / 2, HEIGHT / 2))
         const SCREEN_RADIUS: i32 = 145;
         let min_pos =
@@ -282,17 +289,9 @@ impl Game {
         let rendered_bounds = Rect::new(min_chunk, max_chunk - min_chunk);
 
         for chunk in rendered_bounds.iter() {
-            let map_offset = (Vector2D::from(chunk) + max_chunk) * CHUNK_SIZE;
+            let map_offset = Vector2D::from(chunk) * CHUNK_SIZE;
 
-            self.render_chunk(
-                affine_map,
-                vram,
-                chunk,
-                Vector2D::new(
-                    map_offset.x.rem_euclid(64) as u16,
-                    map_offset.y.rem_euclid(64) as u16,
-                ),
-            );
+            self.render_chunk(affine_map, vram, chunk, map_offset);
         }
 
         affine_map.set_transform(self.screen_space_offset.space.try_to_background().unwrap());
@@ -303,7 +302,7 @@ impl Game {
         affine_map: &mut AffineMap,
         vram: &mut VRamManager,
         chunk: (i32, i32),
-        map_offset: Vector2D<u16>,
+        map_offset: Vector2D<i32>,
     ) {
         let chunk = map::get_tile_chunk(chunk.0, chunk.1);
 
@@ -313,7 +312,7 @@ impl Game {
 
                 affine_map.set_tile(
                     vram,
-                    pos,
+                    Vector2D::new(pos.x.rem_euclid(64) as u16, pos.y.rem_euclid(64) as u16),
                     &resources::bg::planets.tiles,
                     chunk[(x + y * CHUNK_SIZE) as usize],
                 );
@@ -338,10 +337,7 @@ impl Scene for Game {
 
         self.player.frame();
 
-        if !self.has_drawn_background {
-            self.update_map(update.affine_map());
-            self.has_drawn_background = true;
-        }
+        self.update_map(update.affine_map());
     }
 
     fn display(&mut self, display: &mut super::Display) {
