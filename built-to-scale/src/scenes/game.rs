@@ -1,6 +1,6 @@
 use agb::{
     display::{affine::AffineMatrix, object::Sprite, HEIGHT, WIDTH},
-    fixnum::{num, Vector2D},
+    fixnum::{num, Rect, Vector2D},
 };
 
 use util::{Circle, Collider, Number};
@@ -9,8 +9,8 @@ use crate::resources;
 
 use super::{Scene, Update};
 
-struct Offset {
-    space: AffineMatrix,
+struct Camera {
+    position: Vector2D<Number>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -136,7 +136,7 @@ impl Player {
 }
 
 pub struct Game {
-    screen_space_offset: Offset,
+    camera: Camera,
     player: Player,
     terrain: Terrain,
 }
@@ -144,8 +144,8 @@ pub struct Game {
 impl Game {
     pub fn new() -> Self {
         Self {
-            screen_space_offset: Offset {
-                space: AffineMatrix::identity(),
+            camera: Camera {
+                position: Vector2D::default(),
             },
             player: Player {
                 angle: AffineMatrix::identity(),
@@ -254,6 +254,16 @@ impl Game {
 
         self.player.position += self.player.speed;
     }
+
+    fn update_camera(&mut self) {
+        let camera_size = (64, 32).into();
+        let camera_rect = Rect::new(self.camera.position - camera_size / 2, camera_size);
+
+        if !camera_rect.contains_point(self.player.position) {
+            self.camera.position +=
+                (self.player.position - self.camera.position).fast_normalise() / 2;
+        }
+    }
 }
 
 impl Scene for Game {
@@ -271,15 +281,21 @@ impl Scene for Game {
         }
 
         self.player.frame();
+        self.update_camera();
 
-        update.set_pos(self.player.position.floor() - (WIDTH / 2, HEIGHT / 2).into());
+        update.set_pos(
+            (self.camera.position + (num!(0.5), num!(0.5)).into()).floor()
+                - (WIDTH / 2, HEIGHT / 2).into(),
+        );
     }
 
     fn display(&mut self, display: &mut super::Display) {
         display.display(
             self.player.sprite(),
             &self.player.angle,
-            (WIDTH / 2 - 8, HEIGHT / 2 - 8).into(),
+            self.player.rendered_position() - self.camera.position
+                + (num!(0.5), num!(0.5)).into()
+                + (WIDTH / 2, HEIGHT / 2).into(),
             self.player.facing != PlayerFacing::Right,
         );
     }
