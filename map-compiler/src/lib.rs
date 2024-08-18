@@ -57,10 +57,10 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
                 let center = quote_vec(s.circle.position);
                 let r = s.circle.radius.to_raw();
                 let circle = quote! {
-                    ColliderKind::Circle(Circle {
+                    Circle {
                         position: #center,
                         radius: Number::from_raw(#r),
-                    })
+                    }
                 };
 
                 let start_pos = quote_vec(s.start_pos);
@@ -102,12 +102,20 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
 
         let tile_settings: Vec<_> = tiles
             .iter()
-            .map(|&tid| {
-                if tid == u16::MAX {
-                    const TRANSPARENT_TILE_INDEX: u16 = (1 << 10) - 1;
-                    quote!(#TRANSPARENT_TILE_INDEX)
+            .map(|tile_setting| {
+                if tile_setting.tile_id == u16::MAX {
+                    quote!(super::BLANK_TILE)
                 } else {
-                    quote!(#tid)
+                    let tile_id = tile_setting.tile_id;
+                    let hflip = tile_setting.hflip;
+                    let vflip = tile_setting.vflip;
+                    quote!(
+                        super::MapTileSetting {
+                            tile_id: #tile_id,
+                            hflip: #hflip,
+                            vflip: #vflip,
+                        }
+                    )
                 }
             })
             .collect();
@@ -129,7 +137,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
         },
         collider_phf_code,
         quote! {
-            pub static MAP_TILES: phf::Map<[i32; 2], &'static [u16]> =
+            pub static MAP_TILES: phf::Map<[i32; 2], &'static [super::MapTileSetting]> =
         },
         maptile_phf_code
     ))

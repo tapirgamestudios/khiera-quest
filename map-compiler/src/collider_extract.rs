@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use agb_fixnum::Vector2D;
-use nalgebra::Vector2;
+use nalgebra::{Vector2, Vector3};
 use tiled::{Map, ObjectLayer};
 use util::{Arc, Circle, Collider, ColliderKind, Line, Number};
 
@@ -173,7 +173,7 @@ fn rounded_line_collider(
     a: Vector2<f32>,
     o: Vector2<f32>,
     b: Vector2<f32>,
-    radius: f32,
+    mut radius: f32,
     gravitational: bool,
     colliders: &mut Vec<Collider>,
 ) -> (Vector2<f32>, Vector2<f32>) {
@@ -183,6 +183,14 @@ fn rounded_line_collider(
     let x_hat = x.normalize();
     let y_hat = y.normalize();
 
+    let x_hat3 = Vector3::new(x_hat.x, x_hat.y, 0.);
+    let y_hat3 = Vector3::new(y_hat.x, y_hat.y, 0.);
+    let cross_product = x_hat3.cross(&y_hat3).z;
+
+    if cross_product >= 0. {
+        radius *= 5.;
+    }
+
     let c = (x_hat + y_hat).normalize() * radius / ((1. - x_hat.dot(&y_hat)) / 2.).sqrt();
 
     let p1 = x_hat.dot(&c) * x_hat;
@@ -190,13 +198,27 @@ fn rounded_line_collider(
 
     let circle_center = o + c;
 
-    colliders.push(Collider {
-        kind: ColliderKind::Circle(Circle {
-            position: to_vec(circle_center),
-            radius: Number::from_f32(radius),
-        }),
-        gravitational,
-    });
+    if cross_product <= 0. {
+        colliders.push(Collider {
+            kind: ColliderKind::Circle(Circle {
+                position: to_vec(circle_center),
+                radius: Number::from_f32(radius),
+            }),
+            gravitational,
+        });
+    } else {
+        colliders.push(Collider {
+            kind: ColliderKind::Arc(Arc {
+                circle: Circle {
+                    position: to_vec(circle_center),
+                    radius: Number::from_f32(radius),
+                },
+                start_pos: to_vec((p1 - c).normalize()),
+                end_pos: to_vec((p2 - c).normalize()),
+            }),
+            gravitational,
+        })
+    }
 
     (o + p1, o + p2)
 }

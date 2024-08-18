@@ -221,8 +221,8 @@ impl Game {
 
         // put the circles first
         colliders.sort_unstable_by(|a, b| match (&a.kind, &b.kind) {
-            (ColliderKind::Circle(_), _) => Ordering::Less,
-            (_, ColliderKind::Circle(_)) => Ordering::Greater,
+            (ColliderKind::Circle(_) | ColliderKind::Arc(_), _) => Ordering::Less,
+            (_, ColliderKind::Circle(_) | ColliderKind::Arc(_)) => Ordering::Greater,
             (_, _) => Ordering::Equal,
         });
 

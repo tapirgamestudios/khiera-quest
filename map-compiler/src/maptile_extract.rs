@@ -1,8 +1,14 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, u16};
 
 use tiled::{ChunkData, Map, TileLayer};
 
-pub fn extract_tiles(map: &Map) -> HashMap<(i32, i32), Vec<u16>> {
+pub struct TileSetting {
+    pub hflip: bool,
+    pub vflip: bool,
+    pub tile_id: u16,
+}
+
+pub fn extract_tiles(map: &Map) -> HashMap<(i32, i32), Vec<TileSetting>> {
     // if this changes, then 😭
     assert_eq!(ChunkData::HEIGHT, 16);
     assert_eq!(ChunkData::WIDTH, 16);
@@ -23,9 +29,17 @@ pub fn extract_tiles(map: &Map) -> HashMap<(i32, i32), Vec<u16>> {
                 for y in chunk_y * 8..(chunk_y + 1) * 8 {
                     for x in chunk_x * 8..(chunk_x + 1) * 8 {
                         if let Some(tile) = chunk.get_tile(x, y) {
-                            chunk_data.push(tile.id() as u16);
+                            chunk_data.push(TileSetting {
+                                tile_id: tile.id() as u16,
+                                hflip: tile.flip_h,
+                                vflip: tile.flip_v,
+                            });
                         } else {
-                            chunk_data.push(u16::MAX);
+                            chunk_data.push(TileSetting {
+                                tile_id: u16::MAX,
+                                hflip: false,
+                                vflip: false,
+                            });
                         }
                     }
                 }

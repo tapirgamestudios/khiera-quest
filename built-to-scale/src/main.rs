@@ -52,11 +52,13 @@ fn entry(mut gba: agb::Gba) -> ! {
             let chunk_x = pos.x.rem_euclid(8);
             let chunk_y = pos.y.rem_euclid(8);
 
-            let tile_idx = chunk_data[(chunk_x + chunk_y * 8) as usize];
+            let map_tile_setting = chunk_data[(chunk_x + chunk_y * 8) as usize];
 
             (
                 &resources::bg::planets.tiles,
-                resources::bg::planets.tile_settings[tile_idx as usize],
+                resources::bg::planets.tile_settings[map_tile_setting.tile_id as usize]
+                    .hflip(map_tile_setting.hflip)
+                    .vflip(map_tile_setting.vflip),
             )
         }),
     );
