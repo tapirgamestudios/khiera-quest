@@ -197,10 +197,7 @@ impl Game {
     }
 
     fn physics_frame(&mut self) {
-        let mut colliders = self
-            .terrain
-            .colliders(self.player.position)
-            .collect::<Vec<_>>();
+        let mut colliders = self.terrain.colliders(self.player.position);
 
         // put the circles first
         colliders.sort_unstable_by(|a, b| match (a, b) {
@@ -276,9 +273,7 @@ struct Terrain {
 }
 
 impl Terrain {
-    fn colliders<'b>(&self, position: Vector2D<Number>) -> impl Iterator<Item = &'b Collider> {
+    fn colliders<'b>(&self, position: Vector2D<Number>) -> Vec<&'b Collider> {
         map::get_nearby(position.x.floor(), position.y.floor())
-            .iter()
-            .copied()
     }
 }
