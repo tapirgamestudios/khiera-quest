@@ -263,9 +263,6 @@
   <object id="39" x="81.2121" y="-104" width="89.4545" height="89.4545">
    <ellipse/>
   </object>
-  <object id="46" x="11.6667" y="-96">
-   <polygon points="0,0 -2.33333,380.333 -53.3333,381 -48.6667,-125.333 29,-125.333"/>
-  </object>
  </objectgroup>
  <objectgroup id="4" name="Colliders No Gravity">
   <object id="30" x="120" y="96">

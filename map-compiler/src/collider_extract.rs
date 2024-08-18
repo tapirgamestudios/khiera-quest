@@ -417,13 +417,28 @@ fn get_line_colliders(
     let normal = Vector2::new(normalized.y, -normalized.x);
     let length = (start - end).magnitude();
 
-    vec![Collider {
-        kind: ColliderKind::Line(Line {
-            start: to_vec(start),
-            end: to_vec(end),
-            normal: to_vec(normal),
-            length: Number::from_f32(length),
-        }),
-        gravitational,
-    }]
+    let mut start = start;
+    let mut remaining_length = length;
+
+    let mut ret = vec![];
+
+    while remaining_length > 0. {
+        let segment_length = remaining_length.min(100.);
+        let end = start + normalized * segment_length;
+
+        ret.push(Collider {
+            kind: ColliderKind::Line(Line {
+                start: to_vec(start),
+                end: to_vec(end),
+                normal: to_vec(normal),
+                length: Number::from_f32(segment_length),
+            }),
+            gravitational,
+        });
+
+        start = end;
+        remaining_length -= segment_length;
+    }
+
+    ret
 }
