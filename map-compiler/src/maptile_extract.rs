@@ -1,24 +1,26 @@
 use std::collections::HashMap;
 
-use tiled::{ChunkData, Map, TileLayer};
+use tiled::{ChunkData, InfiniteTileLayer, Map, TileLayer};
+
+pub enum GameTileSet {
+    Planets,
+    Platforms,
+}
 
 pub struct TileSetting {
+    pub tileset: GameTileSet,
     pub hflip: bool,
     pub vflip: bool,
     pub tile_id: u16,
 }
 
-pub fn extract_tiles(map: &Map) -> HashMap<(i32, i32), Vec<TileSetting>> {
+pub fn extract_tiles(map_tiles: &InfiniteTileLayer) -> HashMap<(i32, i32), Vec<TileSetting>> {
     // if this changes, then 😭
     assert_eq!(ChunkData::HEIGHT, 16);
     assert_eq!(ChunkData::WIDTH, 16);
     assert_eq!(ChunkData::TILE_COUNT, 256);
 
     let mut tiles = HashMap::new();
-
-    let Some(TileLayer::Infinite(map_tiles)) = map.layers().find_map(|x| x.as_tile_layer()) else {
-        panic!("May layer not valid")
-    };
 
     for ((super_chunk_x, super_chunk_y), chunk) in map_tiles.chunks() {
         // internally split these into 8x8 chunks
@@ -30,12 +32,18 @@ pub fn extract_tiles(map: &Map) -> HashMap<(i32, i32), Vec<TileSetting>> {
                     for x in chunk_x * 8..(chunk_x + 1) * 8 {
                         if let Some(tile) = chunk.get_tile(x, y) {
                             chunk_data.push(TileSetting {
+                                tileset: match tile.get_tileset().name.as_str() {
+                                    "planets" => GameTileSet::Planets,
+                                    "platforms" => GameTileSet::Platforms,
+                                    name => panic!("Unknown tile set {name}"),
+                                },
                                 tile_id: tile.id() as u16,
                                 hflip: tile.flip_h,
                                 vflip: tile.flip_v,
                             });
                         } else {
                             chunk_data.push(TileSetting {
+                                tileset: GameTileSet::Planets,
                                 tile_id: u16::MAX,
                                 hflip: false,
                                 vflip: false,
