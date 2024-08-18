@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
+    ops::ControlFlow,
 };
 
 use agb_fixnum::Vector2D;
@@ -105,71 +106,71 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
                 });
             }
             tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
-                let origin = Vector2::new(object.x, object.y);
-
-                if points.len() == 2 {
-                    colliders.extend(get_line_colliders(
-                        Vector2::new(points[0].0, points[0].1) + origin,
-                        Vector2::new(points[1].0, points[1].1) + origin,
-                        gravitational,
-                    ));
-
-                    continue;
-                }
-
-                let mut modified_points = Vec::new();
-
-                let mut do_line_work = |a: (f32, f32), o: (f32, f32), b: (f32, f32)| {
-                    let a = Vector2::new(a.0, a.1) + origin;
-                    let o = Vector2::new(o.0, o.1) + origin;
-                    let b = Vector2::new(b.0, b.1) + origin;
-
-                    modified_points.push(rounded_line_collider(
-                        a,
-                        o,
-                        b,
-                        2.,
-                        gravitational,
-                        &mut colliders,
-                    ));
-                };
-
-                do_line_work(points[points.len() - 1], points[0], points[1]);
-
-                for x in points.windows(3) {
-                    let [a, o, b] = x else { panic!() };
-                    do_line_work(*a, *o, *b);
-                }
-
-                if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
-                    do_line_work(
-                        points[points.len() - 2],
-                        points[points.len() - 1],
-                        points[0],
-                    );
-                }
-
-                let mut current = modified_points[0].1;
-
-                for (new_end, next_start) in modified_points.iter().skip(1) {
-                    colliders.extend(get_line_colliders(current, *new_end, gravitational));
-
-                    current = *next_start;
-                }
-
-                if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
-                    colliders.extend(get_line_colliders(
-                        current,
-                        modified_points[0].0,
-                        gravitational,
-                    ));
-                }
+                handle_points_for_collider(object, points, &mut colliders, gravitational)
             }
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
         }
     }
 
     colliders
+}
+
+fn handle_points_for_collider(
+    object: tiled::Object,
+    points: &[(f32, f32)],
+    colliders: &mut Vec<Collider>,
+    gravitational: bool,
+) {
+    let origin = Vector2::new(object.x, object.y);
+    if points.len() == 2 {
+        colliders.extend(get_line_colliders(
+            Vector2::new(points[0].0, points[0].1) + origin,
+            Vector2::new(points[1].0, points[1].1) + origin,
+            gravitational,
+        ));
+
+        return;
+    }
+
+    let mut modified_points = Vec::new();
+
+    let mut do_line_work = |a: (f32, f32), o: (f32, f32), b: (f32, f32)| {
+        let a = Vector2::new(a.0, a.1) + origin;
+        let o = Vector2::new(o.0, o.1) + origin;
+        let b = Vector2::new(b.0, b.1) + origin;
+
+        modified_points.push(rounded_line_collider(a, o, b, 2., gravitational, colliders));
+    };
+
+    do_line_work(points[points.len() - 1], points[0], points[1]);
+
+    for x in points.windows(3) {
+        let [a, o, b] = x else { panic!() };
+        do_line_work(*a, *o, *b);
+    }
+
+    if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
+        do_line_work(
+            points[points.len() - 2],
+            points[points.len() - 1],
+            points[0],
+        );
+    }
+
+    let mut current = modified_points[0].1;
+    for (new_end, next_start) in modified_points.iter().skip(1) {
+        colliders.extend(get_line_colliders(current, *new_end, gravitational));
+
+        current = *next_start;
+    }
+
+    if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
+        colliders.extend(get_line_colliders(
+            current,
+            modified_points[0].0,
+            gravitational,
+        ));
+    }
 }
 
 fn extract_colliders(map: &Map) -> Vec<Collider> {
