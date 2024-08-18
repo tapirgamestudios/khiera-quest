@@ -106,6 +106,17 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
             }
             tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
                 let origin = Vector2::new(object.x, object.y);
+
+                if points.len() == 2 {
+                    colliders.extend(get_line_colliders(
+                        Vector2::new(points[0].0, points[0].1) + origin,
+                        Vector2::new(points[1].0, points[1].1) + origin,
+                        gravitational,
+                    ));
+
+                    continue;
+                }
+
                 let mut modified_points = Vec::new();
 
                 let mut do_line_work = |a: (f32, f32), o: (f32, f32), b: (f32, f32)| {
@@ -217,7 +228,7 @@ fn get_3_and_first_gravity(
         if !this_container.iter().any(|&x| colliders[x].gravitational) {
             let center_of_box = (x * BOX_SIZE + BOX_SIZE / 2, y * BOX_SIZE + BOX_SIZE / 2).into();
             let (idx, _) = colliders
-                    .iter()
+                .iter()
                 .enumerate()
                 .filter(|(_, x)| x.gravitational)
                 .map(|(idx, collider)| (idx, collider.closest_point(center_of_box)))
@@ -226,7 +237,7 @@ fn get_3_and_first_gravity(
                 })
                 .unwrap();
 
-                        this_container.insert(idx);
+            this_container.insert(idx);
         }
 
         let mut this_container_as_vec: Vec<_> = this_container.into_iter().collect();

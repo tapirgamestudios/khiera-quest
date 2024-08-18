@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="7" nextobjectid="77">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="7" nextobjectid="85">
  <tileset firstgid="1" source="planets.tsx"/>
  <tileset firstgid="1025" source="platforms.tsx"/>
  <tileset firstgid="2049" source="planets2.tsx"/>
@@ -35,17 +35,17 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,1031,1032,1033,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,1025,1026,1027,1028,1029,1030,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+0,0,0,0,0,0,0,0,0,0,1031,1032,1033,0,0,0
 </chunk>
    <chunk x="0" y="-64" width="16" height="16">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,1036,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,1036,0,0,0,0,0,0,0,0,0,0,0,
@@ -63,7 +63,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,1031,1032,1033,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -987,8 +987,8 @@
   <object id="70" x="-11.75" y="-514">
    <polygon points="0,0 -16,-1.5 -33,5.75 -46,7.25 -52.5,0.5 -50.75,-13.5 -40.5,-27.75 -43.25,-40.75"/>
   </object>
-  <object id="71" x="28.25" y="-567.25">
-   <polygon points="0,0 7.75,-19.75 5,-35.75 -6.75,-42.25 -22.5,-39 -31,-33.5 -49,-30.75 1.75,14.5"/>
+  <object id="78" x="28.75" y="-569.75">
+   <polygon points="0,0 1.5,18.5 -43.5,-29.5 -32.5,-29 -18.5,-38.5 -3.5,-38 6,-29.5 6.25,-13.5"/>
   </object>
  </objectgroup>
  <objectgroup id="4" name="Colliders No Gravity">
@@ -1022,9 +1022,21 @@
   <object id="76" x="48" y="-520" width="8" height="8">
    <ellipse/>
   </object>
+  <object id="77" x="80" y="-488" width="8" height="8">
+   <ellipse/>
+  </object>
+  <object id="80" x="195.5" y="-488">
+   <polyline points="0,0 12.25,6.25"/>
+  </object>
+  <object id="82" x="212.25" y="-519.75">
+   <polyline points="0,0 12,7"/>
+  </object>
+  <object id="84" x="228" y="-551.25">
+   <polyline points="0,0 12.25,6"/>
+  </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" x="0" y="-144">
+  <object id="47" x="-3" y="-170">
    <point/>
   </object>
  </objectgroup>
