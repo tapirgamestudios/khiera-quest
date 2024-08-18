@@ -240,19 +240,21 @@ fn get_3_and_first_gravity(
                     .unwrap_or_default(),
             );
         }
-        if !this_container.iter().any(|&x| colliders[x].gravitational) {
-            let center_of_box = (x * BOX_SIZE + BOX_SIZE / 2, y * BOX_SIZE + BOX_SIZE / 2).into();
-            let (idx, _) = colliders
-                .iter()
-                .enumerate()
-                .filter(|(_, x)| x.gravitational)
-                .map(|(idx, collider)| (idx, collider.closest_point(center_of_box)))
-                .min_by_key(|&(_, closest_point)| {
-                    (closest_point - center_of_box).magnitude_squared()
-                })
-                .unwrap();
+        for xx in 0..2 {
+            for yy in 0..2 {
+                let center_of_box = ((x + xx) * BOX_SIZE, (y + yy) * BOX_SIZE).into();
+                let (idx, _) = colliders
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, x)| x.gravitational)
+                    .map(|(idx, collider)| (idx, collider.closest_point(center_of_box)))
+                    .min_by_key(|&(_, closest_point)| {
+                        (closest_point - center_of_box).magnitude_squared()
+                    })
+                    .unwrap();
 
-            this_container.insert(idx);
+                this_container.insert(idx);
+            }
         }
 
         let mut this_container_as_vec: Vec<_> = this_container.into_iter().collect();
