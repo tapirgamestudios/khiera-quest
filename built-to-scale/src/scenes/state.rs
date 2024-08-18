@@ -55,14 +55,7 @@ impl Display<'_, '_> {
         let mut o = ObjectUnmanaged::new(self.sprite_loader.get_vram_sprite(sprite));
 
         let affine = if hflip {
-            AffineMatrix {
-                a: (-1).into(),
-                b: 0.into(),
-                c: 0.into(),
-                d: 1.into(),
-                x: 0.into(),
-                y: 0.into(),
-            } * affine
+            AffineMatrix::from_scale((-1, 1).into()) * affine
         } else {
             affine
         };
