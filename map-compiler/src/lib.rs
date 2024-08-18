@@ -108,4 +108,4 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     ))
 }
 
-const BOX_SIZE: i32 = 128;
+const BOX_SIZE: i32 = 512;

@@ -198,11 +198,17 @@ impl Game {
             };
             if collider.collides_circle(&player_circle) {
                 let normal = collider.normal_circle(&player_circle);
-                self.player.set_angle_from_normal(normal);
 
-                self.player.speed -= normal * normal.dot(self.player.speed);
+                let dot = normal.dot(self.player.speed);
+                if dot < 0.into() {
+                    self.player.speed -= normal * dot;
+                }
+
+                if self.player.get_normal().dot(normal) > num!(0.8) {
+                    on_ground = true;
+                }
+
                 let overshoot = collider.overshoot(&player_circle);
-                on_ground = true;
 
                 self.player.position += overshoot;
             }
@@ -221,19 +227,22 @@ impl Game {
         });
 
         // work out the gravity to use
-        let gravity_direction = (colliders
+        let gravity_source = colliders
             .iter()
             .filter(|x| x.gravitational)
             .map(|collider| collider.closest_point(self.player.position))
-            .min_by_key(|&closest_point| (closest_point - self.player.position).magnitude_squared())
-            .unwrap_or_default()
-            - self.player.position)
-            .fast_normalise();
+            .min_by_key(|&closest_point| {
+                (closest_point - self.player.position).magnitude_squared()
+            });
+
+        let gravity_direction = if let Some(gravity_source) = gravity_source {
+            (gravity_source - self.player.position).fast_normalise()
+        } else {
+            (0, 0).into()
+        };
 
         let gravity = gravity_direction / 10;
-        if !self.speculate_collision_with_displacement(&colliders, gravity) {
-            self.player.speed += gravity;
-        }
+        self.player.speed += gravity;
 
         if self.handle_collider_collisions(&colliders) {
             self.player.state = PlayerState::OnGround;

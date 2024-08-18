@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use agb_fixnum::Vector2D;
 use nalgebra::Vector2;
-use tiled::Map;
+use tiled::{Map, ObjectLayer};
 use util::{Circle, Collider, ColliderKind, Line, Number};
 
 use crate::BOX_SIZE;
@@ -66,11 +66,10 @@ pub fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usiz
     hs
 }
 
-pub fn extract_colliders(map: &Map) -> Vec<Collider> {
+fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider> {
     let mut colliders = Vec::new();
 
-    let objects = map.layers().find_map(|x| x.as_object_layer()).unwrap();
-    for object in objects.objects() {
+    for object in layer.objects() {
         match &object.shape {
             tiled::ObjectShape::Rect { width, height } => todo!(),
             tiled::ObjectShape::Ellipse { width, height } => {
@@ -90,7 +89,7 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
                         position,
                         radius: Number::from_f32(*width / 2.),
                     }),
-                    gravitational: true,
+                    gravitational,
                 });
             }
             tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
@@ -102,7 +101,14 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
                     let o = Vector2::new(o.0, o.1) + origin;
                     let b = Vector2::new(b.0, b.1) + origin;
 
-                    modified_points.push(rounded_line_collider(a, o, b, 10., true, &mut colliders));
+                    modified_points.push(rounded_line_collider(
+                        a,
+                        o,
+                        b,
+                        2.,
+                        gravitational,
+                        &mut colliders,
+                    ));
                 };
 
                 do_line_work(points[points.len() - 1], points[0], points[1]);
@@ -123,13 +129,17 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
                 let mut current = modified_points[0].1;
 
                 for (new_end, next_start) in modified_points.iter().skip(1) {
-                    colliders.push(get_line_collider(current, *new_end, true));
+                    colliders.push(get_line_collider(current, *new_end, gravitational));
 
                     current = *next_start;
                 }
 
                 if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
-                    colliders.push(get_line_collider(current, modified_points[0].0, true));
+                    colliders.push(get_line_collider(
+                        current,
+                        modified_points[0].0,
+                        gravitational,
+                    ));
                 }
             }
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
@@ -137,6 +147,25 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
     }
 
     colliders
+}
+
+pub fn extract_colliders(map: &Map) -> Vec<Collider> {
+    let gravitational_objects = map
+        .layers()
+        .filter(|x| x.name == "Colliders")
+        .find_map(|x| x.as_object_layer())
+        .unwrap();
+
+    let non_gravitattional_objects = map
+        .layers()
+        .filter(|x| x.name == "Colliders No Gravity")
+        .find_map(|x| x.as_object_layer())
+        .unwrap();
+
+    let mut o = extract_from_layer(&gravitational_objects, true);
+    o.extend(extract_from_layer(&non_gravitattional_objects, false));
+
+    o
 }
 
 // pushes the circle that should be added, and returns the replacement end / start positions (so where line ao and ob should actually finish)
