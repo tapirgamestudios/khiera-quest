@@ -1,6 +1,5 @@
 use std::{error::Error, path::Path};
 
-use agb_fixnum::Vector2D;
 use collider_extract::assemble_colliders;
 use proc_macro2::TokenStream;
 use quote::quote;

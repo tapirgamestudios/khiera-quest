@@ -1,7 +1,6 @@
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
-    ops::ControlFlow,
 };
 
 use agb_fixnum::Vector2D;

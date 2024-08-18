@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use tiled::{ChunkData, InfiniteTileLayer, Map, TileLayer};
+use tiled::{ChunkData, InfiniteTileLayer};
 
 pub enum GameTileSet {
     Planets,
