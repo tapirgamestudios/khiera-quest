@@ -46,27 +46,24 @@ fn entry(mut gba: agb::Gba) -> ! {
     );
     planet_background.set_visible(true);
 
-    let mut planet_scrolled_map = InfiniteScrolledMap::new(
-        planet_background,
-        Box::new(|pos| {
-            let chunk = Vector2D::new(pos.x.div_floor(8), pos.y.div_floor(8));
-            let chunk_data = map::get_planet_tile_chunk(chunk.x, chunk.y);
-            let chunk_x = pos.x.rem_euclid(8);
-            let chunk_y = pos.y.rem_euclid(8);
-
-            let map_tile_setting = chunk_data[(chunk_x + chunk_y * 8) as usize];
-
-            (
-                &resources::bg::planets.tiles,
-                resources::bg::planets.tile_settings[map_tile_setting.tile_id as usize]
-                    .hflip(map_tile_setting.hflip)
-                    .vflip(map_tile_setting.vflip),
-            )
-        }),
-    );
+    let mut planet_scrolled_map =
+        infinite_scroll_wrapper(planet_background, map::get_planet_tile_chunk);
 
     planet_scrolled_map.set_visible(true);
     planet_scrolled_map.init(&mut vram, (-WIDTH / 2, -HEIGHT / 2).into(), &mut || {});
+
+    let mut platform_background = tiles.background(
+        Priority::P1,
+        RegularBackgroundSize::Background32x32,
+        TileFormat::EightBpp,
+    );
+    platform_background.set_visible(true);
+
+    let mut platform_scrolled_map =
+        infinite_scroll_wrapper(platform_background, map::get_platform_tile_chunk);
+
+    platform_scrolled_map.set_visible(true);
+    platform_scrolled_map.init(&mut vram, (-WIDTH / 2, -HEIGHT / 2).into(), &mut || {});
 
     let vblank = VBlank::get();
 
@@ -87,14 +84,48 @@ fn entry(mut gba: agb::Gba) -> ! {
             if let Some(new_pos) = update.new_pos() {
                 while planet_scrolled_map.set_pos(&mut vram, new_pos) != PartialUpdateStatus::Done {
                 }
+
+                while platform_scrolled_map.set_pos(&mut vram, new_pos) != PartialUpdateStatus::Done
+                {
+                }
             }
         }
         vblank.wait_for_vblank();
         scene.display(&mut Display::new(unmanaged.iter(), &mut loader));
 
         planet_scrolled_map.commit(&mut vram);
+        platform_scrolled_map.commit(&mut vram);
 
         tracker.step(&mut mixer);
         mixer.frame();
     }
+}
+
+fn infinite_scroll_wrapper<'a>(
+    planet_background: agb::display::tiled::MapLoan<'a, agb::display::tiled::RegularMap>,
+    get_chunk_data: impl Fn(i32, i32) -> &'static [map::MapTileSetting] + 'a,
+) -> InfiniteScrolledMap<'a> {
+    InfiniteScrolledMap::new(
+        planet_background,
+        Box::new(move |pos| {
+            let chunk = Vector2D::new(pos.x.div_floor(8), pos.y.div_floor(8));
+            let chunk_x = pos.x.rem_euclid(8);
+            let chunk_y = pos.y.rem_euclid(8);
+
+            let chunk_data = get_chunk_data(chunk.x, chunk.y);
+            let map_tile_setting = chunk_data[(chunk_x + chunk_y * 8) as usize];
+
+            let tileset = match map_tile_setting.map_tile_set {
+                map::MapTileSet::Planets => &resources::bg::planets,
+                map::MapTileSet::Platforms => &resources::bg::platforms,
+            };
+
+            (
+                &tileset.tiles,
+                tileset.tile_settings[map_tile_setting.tile_id as usize]
+                    .hflip(map_tile_setting.hflip)
+                    .vflip(map_tile_setting.vflip),
+            )
+        }),
+    )
 }
