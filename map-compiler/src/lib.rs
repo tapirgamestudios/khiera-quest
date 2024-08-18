@@ -10,8 +10,11 @@ mod maptile_extract;
 pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let mut loader = Loader::new();
     let map = loader.load_tmx_map(path)?;
+
     let colliders = collider_extract::extract_colliders(&map);
     let spacial_colliders = collider_extract::spacial_colliders(&colliders);
+
+    let tiles = maptile_extract::extract_tiles(&map);
 
     let colliders_quote = colliders.iter().map(|x| match x {
         Collider::Circle(c) => {
@@ -52,9 +55,32 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
         collider_phf.entry([x, y], &entry);
     }
 
+    let mut maptile_phf = phf_codegen::Map::new();
+
+    for (key, tiles) in tiles.iter() {
+        let x = key.0;
+        let y = key.1;
+
+        let tile_settings: Vec<_> = tiles
+            .iter()
+            .map(|&tid| {
+                if tid == u16::MAX {
+                    const TRANSPARENT_TILE_INDEX: u16 = (1 << 10) - 1;
+                    quote!(#TRANSPARENT_TILE_INDEX)
+                } else {
+                    quote!(#tid)
+                }
+            })
+            .collect();
+
+        maptile_phf.entry([x, y], &quote! { &[#(#tile_settings),*] }.to_string());
+    }
+
     let collider_phf_code = collider_phf.build();
+    let maptile_phf_code = maptile_phf.build();
+
     Ok(format!(
-        "{}{};",
+        "{}{};\n\n{}{};",
         quote! {
             pub const BOX_SIZE: i32 = #BOX_SIZE;
 
@@ -62,7 +88,11 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
 
             pub static NEARBY_COLLIDERS: phf::Map<[i32; 2], &'static [&'static Collider]> =
         },
-        collider_phf_code
+        collider_phf_code,
+        quote! {
+            pub static MAP_TILES: phf::Map<[i32; 2], &'static [u16]> =
+        },
+        maptile_phf_code
     ))
 }
 
