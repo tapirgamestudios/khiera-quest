@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="6" nextobjectid="46">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="6" nextobjectid="47">
  <tileset firstgid="1" source="planets.tsx"/>
  <tileset firstgid="1025" source="platforms.tsx"/>
  <layer id="5" name="Platforms" width="30" height="20">
@@ -262,6 +262,9 @@
   </object>
   <object id="39" x="81.2121" y="-104" width="89.4545" height="89.4545">
    <ellipse/>
+  </object>
+  <object id="46" x="11.6667" y="-96">
+   <polygon points="0,0 -2.33333,380.333 -53.3333,381 -48.6667,-125.333 29,-125.333"/>
   </object>
  </objectgroup>
  <objectgroup id="4" name="Colliders No Gravity">

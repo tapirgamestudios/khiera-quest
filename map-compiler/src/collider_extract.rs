@@ -141,13 +141,13 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
                 let mut current = modified_points[0].1;
 
                 for (new_end, next_start) in modified_points.iter().skip(1) {
-                    colliders.push(get_line_collider(current, *new_end, gravitational));
+                    colliders.extend(get_line_colliders(current, *new_end, gravitational));
 
                     current = *next_start;
                 }
 
                 if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
-                    colliders.push(get_line_collider(
+                    colliders.extend(get_line_colliders(
                         current,
                         modified_points[0].0,
                         gravitational,
@@ -408,12 +408,16 @@ fn to_vec(a: Vector2<f32>) -> Vector2D<Number> {
     (Number::from_f32(a.x), Number::from_f32(a.y)).into()
 }
 
-fn get_line_collider(start: Vector2<f32>, end: Vector2<f32>, gravitational: bool) -> Collider {
+fn get_line_colliders(
+    start: Vector2<f32>,
+    end: Vector2<f32>,
+    gravitational: bool,
+) -> Vec<Collider> {
     let normalized = (end - start).normalize();
     let normal = Vector2::new(normalized.y, -normalized.x);
     let length = (start - end).magnitude();
 
-    Collider {
+    vec![Collider {
         kind: ColliderKind::Line(Line {
             start: to_vec(start),
             end: to_vec(end),
@@ -421,5 +425,5 @@ fn get_line_collider(start: Vector2<f32>, end: Vector2<f32>, gravitational: bool
             length: Number::from_f32(length),
         }),
         gravitational,
-    }
+    }]
 }
