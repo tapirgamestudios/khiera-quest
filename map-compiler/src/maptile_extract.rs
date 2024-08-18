@@ -1,4 +1,4 @@
-use std::{collections::HashMap, u16};
+use std::collections::HashMap;
 
 use tiled::{ChunkData, Map, TileLayer};
 

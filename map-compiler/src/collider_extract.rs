@@ -1,11 +1,23 @@
-use std::collections::HashMap;
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+};
 
 use agb_fixnum::Vector2D;
 use nalgebra::{Vector2, Vector3};
+use proc_macro2::TokenStream;
 use tiled::{Map, ObjectLayer};
 use util::{Arc, Circle, Collider, ColliderKind, Line, Number};
 
-pub const BOX_SIZE: i32 = 64;
+use quote::quote;
+
+use crate::spiral::SpiralIterator;
+
+/// These control the performance and ROM size
+/// The size of a box of colliders in pixels
+const BOX_SIZE: i32 = 32;
+/// The number of boxes to go out from each inner box
+const BOX_DISTANCE_FROM_INNER: usize = 4;
 
 fn occupied_boxes<F>(collider: &Collider, mut f: F)
 where
@@ -54,7 +66,7 @@ where
     }
 }
 
-pub fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usize>> {
+fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usize>> {
     let mut hs: HashMap<(i32, i32), Vec<usize>> = HashMap::new();
 
     for (idx, collider) in colliders.iter().enumerate() {
@@ -149,7 +161,7 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
     colliders
 }
 
-pub fn extract_colliders(map: &Map) -> Vec<Collider> {
+fn extract_colliders(map: &Map) -> Vec<Collider> {
     let gravitational_objects = map
         .layers()
         .filter(|x| x.name == "Colliders")
@@ -166,6 +178,170 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
     o.extend(extract_from_layer(&non_gravitattional_objects, false));
 
     o
+}
+
+fn coordinates_to_generate_box_list_from<T>(
+    spacial_colliders: &HashMap<(i32, i32), T>,
+) -> HashSet<(i32, i32)> {
+    let mut s = HashSet::new();
+
+    let spiral_side_length = BOX_DISTANCE_FROM_INNER * 2 + 1;
+
+    for (x, y) in spacial_colliders.keys() {
+        for (x, y) in SpiralIterator::new((*x, *y)).take(spiral_side_length * spiral_side_length) {
+            s.insert((x, y));
+        }
+    }
+
+    s
+}
+
+fn get_3_and_first_gravity(
+    colliders: &[Collider],
+    spacial_colliders: &HashMap<(i32, i32), Vec<usize>>,
+) -> HashMap<(i32, i32), Vec<usize>> {
+    let box_list = coordinates_to_generate_box_list_from(spacial_colliders);
+
+    let mut resultant = HashMap::new();
+
+    for (x, y) in box_list.into_iter() {
+        let mut this_container: HashSet<usize> = HashSet::new();
+        for (x, y) in SpiralIterator::new((x, y)).take(9) {
+            this_container.extend(
+                spacial_colliders
+                    .get(&(x, y))
+                    .map(|x| x.as_slice())
+                    .unwrap_or_default(),
+            );
+        }
+        if !this_container.iter().any(|&x| colliders[x].gravitational) {
+            // need to find a gravity somewhere
+            'outer: for (x, y) in SpiralIterator::new((x, y)) {
+                for &idx in spacial_colliders
+                    .get(&(x, y))
+                    .map(|x| x.as_slice())
+                    .unwrap_or_default()
+                    .iter()
+                {
+                    let collider = &colliders[idx];
+                    if collider.gravitational {
+                        this_container.insert(idx);
+                        break 'outer;
+                    }
+                }
+            }
+        }
+
+        let mut this_container_as_vec: Vec<_> = this_container.into_iter().collect();
+
+        this_container_as_vec.sort_by(|&a, &b| {
+            let (a, b) = (&colliders[a], &colliders[b]);
+            match (&a.kind, &b.kind) {
+                (ColliderKind::Circle(_) | ColliderKind::Arc(_), _) => Ordering::Less,
+                (_, ColliderKind::Circle(_) | ColliderKind::Arc(_)) => Ordering::Greater,
+                (_, _) => Ordering::Equal,
+            }
+        });
+
+        resultant.insert((x, y), this_container_as_vec);
+    }
+
+    resultant
+}
+
+pub fn assemble_colliders(map: &Map) -> String {
+    let colliders = extract_colliders(map);
+    let spacial_colliders = spacial_colliders(&colliders);
+    let boxed_up = get_3_and_first_gravity(&colliders, &spacial_colliders);
+
+    let colliders_quote = colliders.iter().map(|x| {
+        fn quote_vec(vector: Vector2D<Number>) -> TokenStream {
+            let x = vector.x.to_raw();
+            let y = vector.y.to_raw();
+
+            quote! {
+                Vector2D::new(Number::from_raw(#x), Number::from_raw(#y))
+            }
+        }
+
+        let kind = match &x.kind {
+            ColliderKind::Circle(c) => {
+                let position = quote_vec(c.position);
+                let r = c.radius.to_raw();
+                quote! {
+                    ColliderKind::Circle(Circle {
+                        position: #position,
+                        radius: Number::from_raw(#r),
+                    })
+                }
+            }
+            ColliderKind::Line(line) => {
+                let start = quote_vec(line.start);
+                let end = quote_vec(line.end);
+                let normal = quote_vec(line.normal);
+
+                let length = line.length.to_raw();
+
+                quote! {ColliderKind::Line(Line {
+                    start: #start,
+                    end: #end,
+                    normal: #normal,
+                    length: Number::from_raw(#length),
+                })}
+            }
+            ColliderKind::Arc(s) => {
+                let center = quote_vec(s.circle.position);
+                let r = s.circle.radius.to_raw();
+                let circle = quote! {
+                    Circle {
+                        position: #center,
+                        radius: Number::from_raw(#r),
+                    }
+                };
+
+                let start_pos = quote_vec(s.start_pos);
+                let end_pos = quote_vec(s.end_pos);
+
+                quote! {
+                    ColliderKind::Arc(Arc {
+                        circle: #circle,
+                        start_pos: #start_pos,
+                        end_pos: #end_pos,
+                    })
+                }
+            }
+        };
+        let gravitational = x.gravitational;
+        quote! {
+            Collider {
+                kind: #kind,
+                gravitational: #gravitational
+            }
+        }
+    });
+
+    let mut collider_phf = phf_codegen::Map::new();
+
+    for (key, colliders) in boxed_up.iter() {
+        let x = key.0;
+        let y = key.1;
+        let colliders = colliders.iter().map(|idx| quote! { &COLLIDERS [#idx] });
+        let entry = quote! {&[#(#colliders),*]}.to_string();
+        collider_phf.entry([x, y], &entry);
+    }
+
+    let collider_phf_code = collider_phf.build();
+    format!(
+        "{}{};",
+        quote! {
+            pub const BOX_SIZE: i32 = #BOX_SIZE;
+
+            static COLLIDERS: &[Collider] = &[#(#colliders_quote),*];
+
+            pub static NEARBY_COLLIDERS: phf::Map<[i32; 2], &'static [&'static Collider]> =
+        },
+        collider_phf_code,
+    )
 }
 
 // pushes the circle that should be added, and returns the replacement end / start positions (so where line ao and ob should actually finish)

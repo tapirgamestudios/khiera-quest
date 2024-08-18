@@ -1,12 +1,9 @@
-use core::cmp::Ordering;
-
 use agb::{
     display::{affine::AffineMatrix, object::Sprite, HEIGHT, WIDTH},
     fixnum::{num, Vector2D},
 };
 
-use alloc::vec::Vec;
-use util::{Circle, Collider, ColliderKind, Number};
+use util::{Circle, Collider, Number};
 
 use crate::resources;
 
@@ -217,14 +214,9 @@ impl Game {
     }
 
     fn physics_frame(&mut self) {
-        let mut colliders = self.terrain.colliders(self.player.position);
+        let colliders = self.terrain.colliders(self.player.position);
 
-        // put the circles first
-        colliders.sort_unstable_by(|a, b| match (&a.kind, &b.kind) {
-            (ColliderKind::Circle(_) | ColliderKind::Arc(_), _) => Ordering::Less,
-            (_, ColliderKind::Circle(_) | ColliderKind::Arc(_)) => Ordering::Greater,
-            (_, _) => Ordering::Equal,
-        });
+        agb::println!("{}", colliders.len());
 
         // work out the gravity to use
         let gravity_source = colliders
@@ -298,7 +290,7 @@ struct Terrain {
 }
 
 impl Terrain {
-    fn colliders<'b>(&self, position: Vector2D<Number>) -> Vec<&'b Collider> {
+    fn colliders(&self, position: Vector2D<Number>) -> &'static [&'static Collider] {
         map::get_nearby(position.x.floor(), position.y.floor())
     }
 }

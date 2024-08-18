@@ -65,8 +65,9 @@ impl Iterator for SpiralIterator {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use super::SpiralIterator;
+    use super::*;
 
     #[test]
     fn check_spiral_iterator() {
