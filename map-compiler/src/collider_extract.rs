@@ -254,6 +254,11 @@ pub fn assemble_colliders(map: &Map) -> String {
     let spacial_colliders = spacial_colliders(&colliders);
     let boxed_up = get_3_and_first_gravity(&colliders, &spacial_colliders);
 
+    println!(
+        "cargo::warning=Maximum number of colliders in a box = {}",
+        boxed_up.values().map(|x| x.len()).max().unwrap()
+    );
+
     let colliders_quote = colliders.iter().map(|x| {
         fn quote_vec(vector: Vector2D<Number>) -> TokenStream {
             let x = vector.x.to_raw();
