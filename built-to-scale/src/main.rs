@@ -51,7 +51,7 @@ fn entry(mut gba: agb::Gba) -> ! {
 
     planet_scrolled_map.init(
         &mut vram,
-        START_POINT.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
+        map::CAMERA_START.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
         &mut || {},
     );
 
@@ -66,7 +66,7 @@ fn entry(mut gba: agb::Gba) -> ! {
 
     platform_scrolled_map.init(
         &mut vram,
-        map::START_POINT.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
+        map::CAMERA_START.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
         &mut || {},
     );
 

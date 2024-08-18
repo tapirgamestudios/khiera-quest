@@ -190,6 +190,14 @@ impl Arc {
     }
 }
 
+#[derive(Default, Debug)]
+pub struct ScrollStop {
+    pub minimum_x: Option<Number>,
+    pub minimum_y: Option<Number>,
+    pub maximum_x: Option<Number>,
+    pub maximum_y: Option<Number>,
+}
+
 #[cfg(test)]
 mod tests {
     extern crate std;

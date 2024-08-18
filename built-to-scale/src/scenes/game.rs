@@ -134,7 +134,7 @@ impl Game {
     pub fn new() -> Self {
         Self {
             camera: Camera {
-                position: map::START_POINT,
+                position: map::CAMERA_START,
             },
             player: Player {
                 angle: AffineMatrix::identity(),
@@ -232,6 +232,25 @@ impl Game {
 
         if !camera_rect.contains_point(target_position) {
             self.camera.position += (target_position - self.camera.position).fast_normalise();
+        }
+        if let Some(scroll_stop) = map::get_scroll_stop(
+            self.camera.position.x.floor(),
+            self.camera.position.y.floor(),
+        ) {
+            agb::println!("{:?}", self.camera.position);
+            agb::println!("{:?}", scroll_stop);
+            if let Some(x_min) = scroll_stop.minimum_x {
+                self.camera.position.x = self.camera.position.x.max(x_min);
+            }
+            if let Some(y_min) = scroll_stop.minimum_y {
+                self.camera.position.y = self.camera.position.y.max(y_min);
+            }
+            if let Some(x_max) = scroll_stop.maximum_x {
+                self.camera.position.x = self.camera.position.x.min(x_max);
+            }
+            if let Some(y_max) = scroll_stop.maximum_y {
+                self.camera.position.y = self.camera.position.y.min(y_max);
+            }
         }
     }
 }

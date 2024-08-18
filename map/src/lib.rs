@@ -1,5 +1,5 @@
 #![no_std]
-use util::Collider;
+use util::{Collider, ScrollStop};
 
 mod map {
     use agb_fixnum::Vector2D;
@@ -8,7 +8,7 @@ mod map {
     include!(concat!(env!("OUT_DIR"), "/map.rs"));
 }
 
-pub use map::START_POINT;
+pub use map::{CAMERA_START, START_POINT};
 
 pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
     let x = x / map::BOX_SIZE;
@@ -18,6 +18,13 @@ pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
         .get(&[x, y])
         .copied()
         .unwrap_or_default()
+}
+
+pub fn get_scroll_stop(x: i32, y: i32) -> Option<&'static ScrollStop> {
+    let x = x / map::SCROLL_STOP_BOX;
+    let y = y / map::SCROLL_STOP_BOX;
+
+    map::SCROLL_STOPS.get(&[x, y])
 }
 
 #[derive(Clone, Copy)]

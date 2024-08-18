@@ -1,14 +1,18 @@
+#![feature(int_roundings)]
+
 use std::{error::Error, path::Path};
 
 use collider_extract::assemble_colliders;
 use proc_macro2::TokenStream;
 use quote::quote;
+use scroll_stop::get_scroll_stops;
 use tiled::{Loader, Map, TileLayer};
 use util::Number;
 
 mod collider_extract;
 mod maptile_extract;
 
+mod scroll_stop;
 mod spiral;
 
 pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
@@ -21,7 +25,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let planet_maptile_phf_code = planet_maptile_phf.build();
     let platform_maptile_phf_code = platform_maptile_phf.build();
     Ok(format!(
-        "{}\n\n{}{planet_maptile_phf_code};\n\n{}{platform_maptile_phf_code};\n\n{}",
+        "{}\n\n{}{planet_maptile_phf_code};\n\n{}{platform_maptile_phf_code};\n\n{}\n\n{};",
         assemble_colliders(&map),
         quote! {
             pub static PLANET_MAP_TILES: phf::Map<[i32; 2], &'static [super::MapTileSetting]> =
@@ -30,6 +34,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
             pub static PLATFORM_MAP_TILES: phf::Map<[i32; 2], &'static [super::MapTileSetting]> =
         },
         get_start_point(&map),
+        get_scroll_stops(&map),
     ))
 }
 
@@ -97,12 +102,18 @@ fn get_start_point(map: &Map) -> TokenStream {
         .filter(|x| x.name == "Start")
         .find_map(|x| x.as_object_layer())
         .unwrap();
-    let start_object = layer.objects().next().unwrap();
+    let start_object = layer.objects().find(|x| x.name == "PLAYER").unwrap();
+    let camera = layer.objects().find(|x| x.name == "CAMERA").unwrap();
 
     let x = Number::from_f32(start_object.x).to_raw();
     let y = Number::from_f32(start_object.y).to_raw();
 
+    let cx = Number::from_f32(camera.x).to_raw();
+    let cy = Number::from_f32(camera.y).to_raw();
+
     quote! {
         pub const START_POINT: Vector2D<Number> = Vector2D::new(Number::from_raw(#x), Number::from_raw(#y));
+        pub const CAMERA_START: Vector2D<Number> = Vector2D::new(Number::from_raw(#cx), Number::from_raw(#cy));
+
     }
 }
