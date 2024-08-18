@@ -6,7 +6,7 @@ use std::{
 use agb_fixnum::Vector2D;
 use nalgebra::{Vector2, Vector3};
 use proc_macro2::TokenStream;
-use tiled::{Map, ObjectLayer};
+use tiled::{Map, ObjectLayer, PropertyValue};
 use util::{Arc, Circle, Collider, ColliderKind, Line, Number};
 
 use quote::quote;
@@ -136,6 +136,19 @@ fn handle_points_for_collider(
     is_polygon: bool,
 ) {
     let origin = Vector2::new(object.x, object.y);
+
+    let radius = object
+        .properties
+        .get("radius")
+        .map(|radius| {
+            if let PropertyValue::FloatValue(radius) = radius {
+                *radius
+            } else {
+                panic!("Invalid value for radius {radius:?}")
+            }
+        })
+        .unwrap_or(2.);
+
     if points.len() == 2 {
         colliders.extend(get_line_colliders(
             Vector2::new(points[0].0, points[0].1) + origin,
@@ -153,7 +166,14 @@ fn handle_points_for_collider(
         let o = Vector2::new(o.0, o.1) + origin;
         let b = Vector2::new(b.0, b.1) + origin;
 
-        modified_points.push(rounded_line_collider(a, o, b, 2., gravitational, colliders));
+        modified_points.push(rounded_line_collider(
+            a,
+            o,
+            b,
+            radius,
+            gravitational,
+            colliders,
+        ));
     };
 
     do_line_work(points[points.len() - 1], points[0], points[1]);

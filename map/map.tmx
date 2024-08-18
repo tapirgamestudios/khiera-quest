@@ -1045,6 +1045,9 @@
    <polygon points="0,0 1.5,18.5 -43.5,-29.5 -32.5,-29 -18.5,-38.5 -3.5,-38 6,-29.5 6.25,-13.5"/>
   </object>
   <object id="87" x="544.5" y="-552.75">
+   <properties>
+    <property name="radius" type="float" value="10"/>
+   </properties>
    <polygon points="0,0 -12.5,-6.5 -35.5,-42.25 -38,-66.75 -22,-89.75 9.25,-103.75 23,-103.5 62.25,-52.25 62,-33.75 47,-13.25 24.5,-3"/>
   </object>
  </objectgroup>
