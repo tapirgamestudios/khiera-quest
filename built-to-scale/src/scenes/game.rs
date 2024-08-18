@@ -20,7 +20,7 @@ enum PlayerFacing {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PlayerState {
+enum JumpState {
     OnGround,
     Jumping,
     Falling,
@@ -30,7 +30,7 @@ struct Player {
     angle: AffineMatrix,
     speed: Vector2D<Number>,
     position: Vector2D<Number>,
-    state: PlayerState,
+    jump_state: JumpState,
     facing: PlayerFacing,
 
     frame: usize,
@@ -89,7 +89,7 @@ impl Player {
             self.speed += normal * JUMP_SPEED;
             self.position += self.speed;
 
-            self.state = PlayerState::Jumping;
+            self.jump_state = JumpState::Jumping;
             self.frame = 0;
         }
     }
@@ -100,26 +100,26 @@ impl Player {
 
     fn frame(&mut self) {
         self.frame = self.frame.wrapping_add(1);
-        if self.state == PlayerState::Jumping && self.frame > 32 {
-            self.state = PlayerState::Falling;
+        if self.jump_state == JumpState::Jumping && self.frame > 32 {
+            self.jump_state = JumpState::Falling;
         }
     }
 
     fn is_on_ground(&self) -> bool {
-        self.state == PlayerState::OnGround
+        self.jump_state == JumpState::OnGround
     }
 
     fn sprite(&self) -> &'static Sprite {
-        match self.state {
-            PlayerState::OnGround => {
+        match self.jump_state {
+            JumpState::OnGround => {
                 if self.speed.magnitude_squared() < num!(0.1) {
                     resources::IDLE.sprite(0)
                 } else {
                     resources::WALK.animation_sprite(self.frame / 16)
                 }
             }
-            PlayerState::Jumping => resources::JUMP.animation_sprite(self.frame / 16),
-            PlayerState::Falling => resources::FALL.sprite(0),
+            JumpState::Jumping => resources::JUMP.animation_sprite(self.frame / 16),
+            JumpState::Falling => resources::FALL.sprite(0),
         }
     }
 }
@@ -140,7 +140,7 @@ impl Game {
                 angle: AffineMatrix::identity(),
                 speed: (0, 0).into(),
                 position: map::START_POINT,
-                state: PlayerState::Falling,
+                jump_state: JumpState::Falling,
                 facing: PlayerFacing::Right,
 
                 frame: 0,
@@ -206,13 +206,10 @@ impl Game {
         self.player.speed += gravity;
 
         if self.handle_collider_collisions(colliders) {
-            self.player.state = PlayerState::OnGround;
-        }
-
-        if !self.player.is_on_ground() {
-            self.player.speed *= num!(0.9);
-        } else {
+            self.player.jump_state = JumpState::OnGround;
             self.player.speed *= num!(0.8);
+        } else {
+            self.player.speed *= num!(0.9);
         }
 
         if self.player.speed.magnitude_squared() < num!(0.005) {
