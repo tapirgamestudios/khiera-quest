@@ -226,11 +226,12 @@ impl Game {
 
     fn update_camera(&mut self) {
         let camera_size = (64, 32).into();
+        let target_position =
+            self.player.position + self.player.get_normal() * 32 + self.player.speed * 64;
         let camera_rect = Rect::new(self.camera.position - camera_size / 2, camera_size);
 
-        if !camera_rect.contains_point(self.player.position) {
-            self.camera.position +=
-                (self.player.position - self.camera.position).fast_normalise() / 2;
+        if !camera_rect.contains_point(target_position) {
+            self.camera.position += (target_position - self.camera.position).fast_normalise();
         }
     }
 }
