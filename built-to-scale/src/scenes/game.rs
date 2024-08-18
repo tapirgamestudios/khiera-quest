@@ -238,7 +238,7 @@ impl Game {
 
         let gravity = gravity_direction / 10;
         if !self.speculate_collision_with_displacement(&colliders, gravity) {
-        self.player.speed += gravity;
+            self.player.speed += gravity;
         }
 
         if self.handle_collider_collisions(&colliders) {
@@ -249,6 +249,10 @@ impl Game {
             self.player.speed *= num!(0.9);
         } else {
             self.player.speed *= num!(0.8);
+        }
+
+        if self.player.speed.magnitude_squared() == 0.into() {
+            self.player.speed = (0, 0).into();
         }
 
         self.player.update_facing(-gravity_direction);
