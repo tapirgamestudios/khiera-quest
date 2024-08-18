@@ -179,12 +179,12 @@ impl Game {
     }
 
     fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> bool {
-        let player_circle = Circle {
-            position: self.player.position,
-            radius: 8.into(),
-        };
         let mut on_ground = false;
         for collider in colliders {
+            let player_circle = Circle {
+                position: self.player.position,
+                radius: 8.into(),
+            };
             if collider.collides_circle(&player_circle) {
                 let normal = collider.normal_circle(&player_circle);
                 self.player.set_angle_from_normal(normal);
@@ -193,7 +193,7 @@ impl Game {
                 let overshoot = collider.overshoot(&player_circle);
                 on_ground = true;
 
-                self.player.position += overshoot / 32;
+                self.player.position += overshoot;
             }
         }
         on_ground
