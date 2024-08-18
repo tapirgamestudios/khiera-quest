@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
 
-members = [ "map", "map-compiler","util"]
+members = [ "map", "map-compiler", "util"]
 
-exclude = ["built-to-scale"]
+exclude = ["built-to-scale", "sfx"]

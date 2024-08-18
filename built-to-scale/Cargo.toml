@@ -6,8 +6,11 @@ edition = "2021"
 
 [dependencies]
 agb = { path = "../../agb/agb" }
+agb_tracker = { path = "../../agb/tracker/agb-tracker" }
 util = { path = "../util", features = ["agb"] }
 map = { path = "../map" }
+
+sfx = { path = "../sfx" }
 
 [profile.dev]
 opt-level = 3

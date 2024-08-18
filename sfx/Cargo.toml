@@ -1,0 +1,8 @@
+[package]
+name = "sfx"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+agb = { path = "../../agb/agb" }
+agb_tracker = { path = "../../agb/tracker/agb-tracker" }

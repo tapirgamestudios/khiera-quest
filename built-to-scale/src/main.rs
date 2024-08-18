@@ -15,7 +15,9 @@ use agb::{
     fixnum::Vector2D,
     input::ButtonController,
     interrupt::VBlank,
+    sound::mixer::Frequency,
 };
+use agb_tracker::Tracker;
 use alloc::boxed::Box;
 use scenes::{Display, SceneManager, Update};
 
@@ -70,6 +72,10 @@ fn entry(mut gba: agb::Gba) -> ! {
 
     let mut button_controller = ButtonController::new();
 
+    let mut mixer = gba.mixer.mixer(Frequency::Hz32768);
+    mixer.enable();
+    let mut tracker = Tracker::new(&sfx::BG_MUSIC);
+
     loop {
         button_controller.update();
 
@@ -88,5 +94,8 @@ fn entry(mut gba: agb::Gba) -> ! {
         scene.display(&mut Display::new(unmanaged.iter(), &mut loader));
 
         infinite_scrolled_map.commit(&mut vram);
+
+        tracker.step(&mut mixer);
+        mixer.frame();
     }
 }
