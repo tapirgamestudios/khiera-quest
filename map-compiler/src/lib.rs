@@ -2,7 +2,7 @@ use std::{error::Error, path::Path};
 
 use quote::quote;
 use tiled::Loader;
-use util::Collider;
+use util::ColliderKind;
 
 mod collider_extract;
 mod maptile_extract;
@@ -16,35 +16,44 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
 
     let tiles = maptile_extract::extract_tiles(&map);
 
-    let colliders_quote = colliders.iter().map(|x| match x {
-        Collider::Circle(c) => {
-            let x = c.position.x.to_raw();
-            let y = c.position.y.to_raw();
-            let r = c.radius.to_raw();
-            quote! {
-                Collider::Circle(Circle {
-                    position: Vector2D::new(Number::from_raw(#x), Number::from_raw(#y)),
-                    radius: Number::from_raw(#r),
-                })
+    let colliders_quote = colliders.iter().map(|x| {
+        let kind = match &x.kind {
+            ColliderKind::Circle(c) => {
+                let x = c.position.x.to_raw();
+                let y = c.position.y.to_raw();
+                let r = c.radius.to_raw();
+                quote! {
+                    ColliderKind::Circle(Circle {
+                        position: Vector2D::new(Number::from_raw(#x), Number::from_raw(#y)),
+                        radius: Number::from_raw(#r),
+                    })
+                }
             }
-        }
-        Collider::Line(line) => {
-            let sx = line.start.x.to_raw();
-            let sy = line.start.y.to_raw();
-            let ex = line.end.x.to_raw();
-            let ey = line.end.y.to_raw();
+            ColliderKind::Line(line) => {
+                let sx = line.start.x.to_raw();
+                let sy = line.start.y.to_raw();
+                let ex = line.end.x.to_raw();
+                let ey = line.end.y.to_raw();
 
-            let nx = line.normal.x.to_raw();
-            let ny = line.normal.y.to_raw();
+                let nx = line.normal.x.to_raw();
+                let ny = line.normal.y.to_raw();
 
-            let length = line.length.to_raw();
+                let length = line.length.to_raw();
 
-            quote! {Collider::Line(Line {
-                start: Vector2D::new(Number::from_raw(#sx), Number::from_raw(#sy)),
-                end: Vector2D::new(Number::from_raw(#ex), Number::from_raw(#ey)),
-                normal: Vector2D::new(Number::from_raw(#nx), Number::from_raw(#ny)),
-                length: Number::from_raw(#length),
-            })}
+                quote! {ColliderKind::Line(Line {
+                    start: Vector2D::new(Number::from_raw(#sx), Number::from_raw(#sy)),
+                    end: Vector2D::new(Number::from_raw(#ex), Number::from_raw(#ey)),
+                    normal: Vector2D::new(Number::from_raw(#nx), Number::from_raw(#ny)),
+                    length: Number::from_raw(#length),
+                })}
+            }
+        };
+        let gravitational = x.gravitational;
+        quote! {
+            Collider {
+                kind: #kind,
+                gravitational: #gravitational
+            }
         }
     });
 

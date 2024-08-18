@@ -10,7 +10,7 @@ use agb::{
 };
 
 use alloc::vec::Vec;
-use util::{Circle, Collider, Line, Number};
+use util::{Circle, Collider, ColliderKind, Line, Number};
 
 use crate::resources;
 
@@ -233,15 +233,16 @@ impl Game {
         let mut colliders = self.terrain.colliders(self.player.position);
 
         // put the circles first
-        colliders.sort_unstable_by(|a, b| match (a, b) {
-            (Collider::Circle(_), _) => Ordering::Less,
-            (_, Collider::Circle(_)) => Ordering::Greater,
+        colliders.sort_unstable_by(|a, b| match (&a.kind, &b.kind) {
+            (ColliderKind::Circle(_), _) => Ordering::Less,
+            (_, ColliderKind::Circle(_)) => Ordering::Greater,
             (_, _) => Ordering::Equal,
         });
 
         // work out the gravity to use
         let gravity_direction = (colliders
             .iter()
+            .filter(|x| x.gravitational)
             .map(|collider| collider.closest_point(self.player.position))
             .min_by_key(|&closest_point| (closest_point - self.player.position).magnitude_squared())
             .unwrap_or_default()

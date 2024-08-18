@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use agb_fixnum::Vector2D;
 use nalgebra::Vector2;
 use tiled::Map;
-use util::{Circle, Collider, Line, Number};
+use util::{Circle, Collider, ColliderKind, Line, Number};
 
 use crate::BOX_SIZE;
 
@@ -11,8 +11,8 @@ fn occupied_boxes<F>(collider: &Collider, mut f: F)
 where
     F: FnMut(i32, i32),
 {
-    match collider {
-        Collider::Circle(circle) => {
+    match &collider.kind {
+        ColliderKind::Circle(circle) => {
             let position = circle.position.floor();
             let radius = circle.radius.floor();
 
@@ -36,7 +36,7 @@ where
                 }
             }
         }
-        Collider::Line(line) => {
+        ColliderKind::Line(line) => {
             let start = line.start.floor();
             let end = line.end.floor();
             let mut current_box = (i32::MIN, i32::MIN);
@@ -85,10 +85,13 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
                 )
                     .into();
 
-                colliders.push(Collider::Circle(Circle {
-                    position,
-                    radius: Number::from_f32(*width / 2.),
-                }));
+                colliders.push(Collider {
+                    kind: ColliderKind::Circle(Circle {
+                        position,
+                        radius: Number::from_f32(*width / 2.),
+                    }),
+                    gravitational: true,
+                });
             }
             tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
                 let origin = Vector2::new(object.x, object.y);
@@ -99,7 +102,7 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
                     let o = Vector2::new(o.0, o.1) + origin;
                     let b = Vector2::new(b.0, b.1) + origin;
 
-                    modified_points.push(rounded_line_collider(a, o, b, 10., &mut colliders));
+                    modified_points.push(rounded_line_collider(a, o, b, 10., true, &mut colliders));
                 };
 
                 do_line_work(points[points.len() - 1], points[0], points[1]);
@@ -120,13 +123,13 @@ pub fn extract_colliders(map: &Map) -> Vec<Collider> {
                 let mut current = modified_points[0].1;
 
                 for (new_end, next_start) in modified_points.iter().skip(1) {
-                    colliders.push(get_line_collider(current, *new_end));
+                    colliders.push(get_line_collider(current, *new_end, true));
 
                     current = *next_start;
                 }
 
                 if matches!(&object.shape, tiled::ObjectShape::Polygon { .. }) {
-                    colliders.push(get_line_collider(current, modified_points[0].0));
+                    colliders.push(get_line_collider(current, modified_points[0].0, true));
                 }
             }
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
@@ -142,6 +145,7 @@ fn rounded_line_collider(
     o: Vector2<f32>,
     b: Vector2<f32>,
     radius: f32,
+    gravitational: bool,
     colliders: &mut Vec<Collider>,
 ) -> (Vector2<f32>, Vector2<f32>) {
     let x = a - o;
@@ -157,10 +161,13 @@ fn rounded_line_collider(
 
     let circle_center = o + c;
 
-    colliders.push(Collider::Circle(Circle {
-        position: to_vec(circle_center),
-        radius: Number::from_f32(radius),
-    }));
+    colliders.push(Collider {
+        kind: ColliderKind::Circle(Circle {
+            position: to_vec(circle_center),
+            radius: Number::from_f32(radius),
+        }),
+        gravitational,
+    });
 
     (o + p1, o + p2)
 }
@@ -169,15 +176,18 @@ fn to_vec(a: Vector2<f32>) -> Vector2D<Number> {
     (Number::from_f32(a.x), Number::from_f32(a.y)).into()
 }
 
-fn get_line_collider(start: Vector2<f32>, end: Vector2<f32>) -> Collider {
+fn get_line_collider(start: Vector2<f32>, end: Vector2<f32>, gravitational: bool) -> Collider {
     let normalized = (end - start).normalize();
     let normal = Vector2::new(normalized.y, -normalized.x);
     let length = (start - end).magnitude();
 
-    Collider::Line(Line {
-        start: to_vec(start),
-        end: to_vec(end),
-        normal: to_vec(normal),
-        length: Number::from_f32(length),
-    })
+    Collider {
+        kind: ColliderKind::Line(Line {
+            start: to_vec(start),
+            end: to_vec(end),
+            normal: to_vec(normal),
+            length: Number::from_f32(length),
+        }),
+        gravitational,
+    }
 }

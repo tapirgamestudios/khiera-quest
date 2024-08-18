@@ -5,37 +5,43 @@ use agb_fixnum::{Num, Vector2D};
 pub type Number = Num<i32, 8>;
 
 #[derive(Clone, Debug)]
-pub enum Collider {
+pub enum ColliderKind {
     Circle(Circle),
     Line(Line),
 }
 
+#[derive(Clone, Debug)]
+pub struct Collider {
+    pub kind: ColliderKind,
+    pub gravitational: bool,
+}
+
 impl Collider {
     pub fn collides_circle(&self, circle: &Circle) -> bool {
-        match self {
-            Collider::Circle(this) => this.collides_circle(circle),
-            Collider::Line(this) => this.collides_circle(circle),
+        match &self.kind {
+            ColliderKind::Circle(this) => this.collides_circle(circle),
+            ColliderKind::Line(this) => this.collides_circle(circle),
         }
     }
 
     pub fn normal_circle(&self, circle: &Circle) -> Vector2D<Number> {
-        match self {
-            Collider::Circle(this) => this.normal_point(circle.position),
-            Collider::Line(this) => this.normal,
+        match &self.kind {
+            ColliderKind::Circle(this) => this.normal_point(circle.position),
+            ColliderKind::Line(this) => this.normal,
         }
     }
 
     pub fn overshoot(&self, circle: &Circle) -> Vector2D<Number> {
-        match self {
-            Collider::Circle(this) => this.overshoot_circle(circle),
-            Collider::Line(this) => this.overshoot_circle(circle),
+        match &self.kind {
+            ColliderKind::Circle(this) => this.overshoot_circle(circle),
+            ColliderKind::Line(this) => this.overshoot_circle(circle),
         }
     }
 
     pub fn closest_point(&self, point: Vector2D<Number>) -> Vector2D<Number> {
-        match self {
-            Collider::Circle(this) => this.closest_point(point),
-            Collider::Line(this) => this.closest_point(point),
+        match &self.kind {
+            ColliderKind::Circle(this) => this.closest_point(point),
+            ColliderKind::Line(this) => this.closest_point(point),
         }
     }
 }
