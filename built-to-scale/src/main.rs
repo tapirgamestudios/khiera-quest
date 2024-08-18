@@ -19,6 +19,7 @@ use agb::{
 };
 use agb_tracker::Tracker;
 use alloc::boxed::Box;
+use map::START_POINT;
 use scenes::{Display, SceneManager, Update};
 
 extern crate alloc;
@@ -50,7 +51,11 @@ fn entry(mut gba: agb::Gba) -> ! {
         infinite_scroll_wrapper(planet_background, map::get_planet_tile_chunk);
 
     planet_scrolled_map.set_visible(true);
-    planet_scrolled_map.init(&mut vram, (-WIDTH / 2, -HEIGHT / 2).into(), &mut || {});
+    planet_scrolled_map.init(
+        &mut vram,
+        START_POINT.floor() + (-WIDTH / 2, -HEIGHT / 2).into(),
+        &mut || {},
+    );
 
     let mut platform_background = tiles.background(
         Priority::P1,
