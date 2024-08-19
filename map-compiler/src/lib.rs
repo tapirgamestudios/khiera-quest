@@ -137,7 +137,8 @@ fn get_powerups(map: &Map) -> TokenStream {
 
         let powerup = match obj.name.as_str() {
             "Jump Boost" => quote! { PowerUpKind::JumpBoost },
-            "Speed Boost" => quote! { PowerUpKind::SpeedBoost },
+            "Dash" => quote! { PowerUpKind::Dash },
+            "Double Jump" => quote! { PowerUpKind::DoubleJump },
             boost_name => todo!("Unknown boost {boost_name}"),
         };
 

@@ -201,7 +201,8 @@ impl Player {
             PowerUpKind::JumpBoost => {
                 self.jump_speed = num!(3.5);
             }
-            PowerUpKind::SpeedBoost => self.can_dash = true,
+            PowerUpKind::Dash => self.can_dash = true,
+            PowerUpKind::DoubleJump => self.max_jumps += 1,
         }
     }
 }

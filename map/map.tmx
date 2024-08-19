@@ -2142,13 +2142,13 @@
   <object id="186" name="Jump Boost" x="-94.2083" y="-611">
    <point/>
   </object>
-  <object id="187" name="Speed Boost" x="1151.04" y="-652.708">
+  <object id="187" name="Dash" x="1151.04" y="-652.708">
    <point/>
   </object>
-  <object id="190" name="Speed Boost" x="1155.63" y="-629.875">
+  <object id="190" name="Double Jump" x="1155.63" y="-629.875">
    <point/>
   </object>
-  <object id="191" name="Speed Boost" x="1142.13" y="-665.313">
+  <object id="191" name="Double Jump" x="1142.13" y="-665.313">
    <point/>
   </object>
  </objectgroup>

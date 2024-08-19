@@ -44,6 +44,7 @@ extract_statics!(
         BUBBLE,
         BUBBLE_POP,
         JUMP_BOOST,
-        SPEED_BOOST
+        DOUBLE_JUMP,
+        DASH,
     ]
 );
