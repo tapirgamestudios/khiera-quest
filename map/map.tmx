@@ -1026,13 +1026,13 @@
   <object id="61" x="192" y="-88">
    <polygon points="0,0 -8,0 -8,-160 0,-160"/>
   </object>
-  <object id="62" x="57.3333" y="-469.333" width="164" height="164">
+  <object id="62" x="58.7878" y="-469.151" width="164" height="164">
    <ellipse/>
   </object>
-  <object id="64" x="312" y="-424.667" width="88.6667" height="88.6667">
+  <object id="64" x="313.625" y="-423.542" width="88.6667" height="88.6667">
    <ellipse/>
   </object>
-  <object id="65" x="400.667" y="-558" width="87.3333" height="87.3333">
+  <object id="65" x="402.122" y="-558" width="85.6969" height="85.6969">
    <ellipse/>
   </object>
   <object id="66" x="-56.25" y="-600.5" width="88" height="88">

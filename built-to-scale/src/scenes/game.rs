@@ -36,8 +36,6 @@ struct Player {
     frame: usize,
 }
 
-const JUMP_SPEED: i32 = 5;
-
 impl Player {
     fn update_facing(&mut self, direction: Vector2D<Number>) {
         let target_angle = AffineMatrix {
@@ -86,7 +84,7 @@ impl Player {
         if self.is_on_ground() {
             let normal = self.get_normal();
 
-            self.speed += normal * JUMP_SPEED;
+            self.speed += normal * num!(4.);
             self.position += self.speed;
 
             self.jump_state = JumpState::Jumping;
@@ -115,7 +113,7 @@ impl Player {
                 if self.speed.magnitude_squared() < num!(0.1) {
                     resources::IDLE.sprite(0)
                 } else {
-                    resources::WALK.animation_sprite(self.frame / 16)
+                    resources::WALK.animation_sprite(self.frame / 8)
                 }
             }
             JumpState::Jumping => resources::JUMP.animation_sprite(self.frame / 16),
@@ -184,7 +182,7 @@ impl Game {
         on_ground
     }
 
-    fn physics_frame(&mut self) {
+    fn physics_frame(&mut self, jump_pressed: bool) {
         let colliders = self.terrain.colliders(self.player.position);
 
         // work out the gravity to use
@@ -202,7 +200,14 @@ impl Game {
             (0, 0).into()
         };
 
-        let gravity = gravity_direction / 10;
+        let gravity = if self.player.jump_state == JumpState::Jumping && jump_pressed {
+            gravity_direction / 128
+        } else if self.player.jump_state == JumpState::OnGround {
+            gravity_direction / 10
+        } else {
+            gravity_direction / 5
+        };
+
         self.player.speed += gravity;
 
         if self.handle_collider_collisions(colliders) {
@@ -258,7 +263,7 @@ impl Scene for Game {
     fn update(&mut self, update: &mut Update) {
         let button_press = update.button_x_tri();
         self.handle_direction_input(button_press as i32);
-        self.physics_frame();
+        self.physics_frame(update.jump_pressed());
 
         if update.jump_just_pressed() {
             self.handle_jump_input();

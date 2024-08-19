@@ -40,6 +40,10 @@ impl Update<'_> {
     pub fn jump_just_pressed(&self) -> bool {
         self.button.is_just_pressed(Button::A)
     }
+
+    pub fn jump_pressed(&self) -> bool {
+        self.button.is_pressed(Button::A)
+    }
 }
 
 pub struct Display<'a, 'b> {
