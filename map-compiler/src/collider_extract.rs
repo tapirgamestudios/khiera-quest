@@ -176,19 +176,19 @@ fn handle_points_for_collider(
         ));
     };
 
-    do_line_work(points[points.len() - 1], points[0], points[1]);
-
     for x in points.windows(3) {
         let [a, o, b] = x else { panic!() };
         do_line_work(*a, *o, *b);
     }
 
+    // do the closing part of the polygon
     if is_polygon {
         do_line_work(
             points[points.len() - 2],
             points[points.len() - 1],
             points[0],
         );
+        do_line_work(points[points.len() - 1], points[0], points[1]);
     }
 
     let mut current = modified_points[0].1;
@@ -202,6 +202,22 @@ fn handle_points_for_collider(
         colliders.extend(get_line_colliders(
             current,
             modified_points[0].0,
+            gravitational,
+        ));
+    } else {
+        // need to manually attach the start and end lines
+        let start_point = Vector2::new(points[0].0, points[0].1) + origin;
+        let end_point =
+            Vector2::new(points[points.len() - 1].0, points[points.len() - 1].1) + origin;
+
+        colliders.extend(get_line_colliders(
+            start_point,
+            modified_points[0].0,
+            gravitational,
+        ));
+        colliders.extend(get_line_colliders(
+            modified_points[modified_points.len() - 1].1,
+            end_point,
             gravitational,
         ));
     }
