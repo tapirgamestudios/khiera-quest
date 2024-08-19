@@ -334,7 +334,8 @@ impl Game {
         let camera_rect = Rect::new(self.camera.position - camera_size / 2, camera_size);
 
         if !camera_rect.contains_point(target_position) {
-            self.camera.position += (target_position - self.camera.position).fast_normalise();
+            self.camera.position +=
+                (target_position - self.camera.position).fast_normalise() * num!(1.25);
         }
         if let Some(scroll_stop) = map::get_scroll_stop(
             self.camera.position.x.floor(),
