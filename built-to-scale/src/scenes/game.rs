@@ -246,10 +246,10 @@ impl Game {
                     GroundState::OnGround
                 } else if value > num!(0.7) {
                     // just over 45 degrees (since 0.7 ~= sqrt(2) / 2). Still should be considered ground, but apply less friction
-                    self.player.jump_state = JumpState::HasJump;
+                    self.player.jump_state = JumpState::HasJump; // should allow for another jump
                     self.player.speed *= num!(0.90);
 
-                    GroundState::OnGround // should allow for another jump
+                    GroundState::OnGround
                 } else {
                     // hit something which isn't floor-like
                     self.player.speed *= num!(0.95);
