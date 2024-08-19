@@ -25,7 +25,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
     let planet_maptile_phf_code = planet_maptile_phf.build();
     let platform_maptile_phf_code = platform_maptile_phf.build();
     Ok(format!(
-        "{}\n\n{}{planet_maptile_phf_code};\n\n{}{platform_maptile_phf_code};\n\n{}\n\n{};",
+        "{}\n\n{}{planet_maptile_phf_code};\n\n{}{platform_maptile_phf_code};\n\n{}\n\n{};\n{}",
         assemble_colliders(&map),
         quote! {
             pub static PLANET_MAP_TILES: phf::Map<[i32; 2], &'static [super::MapTileSetting]> =
@@ -35,6 +35,7 @@ pub fn compile_map(path: impl AsRef<Path>) -> Result<String, Box<dyn Error>> {
         },
         get_start_point(&map),
         get_scroll_stops(&map),
+        get_powerups(&map),
     ))
 }
 
@@ -115,5 +116,39 @@ fn get_start_point(map: &Map) -> TokenStream {
         pub const START_POINT: Vector2D<Number> = Vector2D::new(Number::from_raw(#x), Number::from_raw(#y));
         pub const CAMERA_START: Vector2D<Number> = Vector2D::new(Number::from_raw(#cx), Number::from_raw(#cy));
 
+    }
+}
+
+fn get_powerups(map: &Map) -> TokenStream {
+    let layer = map
+        .layers()
+        .find_map(|x| {
+            if x.name == "Items" {
+                x.as_object_layer()
+            } else {
+                None
+            }
+        })
+        .unwrap();
+
+    let powerups = layer.objects().map(|obj| {
+        let x = Number::from_f32(obj.x).to_raw();
+        let y = Number::from_f32(obj.y).to_raw();
+
+        let powerup = match obj.name.as_str() {
+            "Jump Boost" => quote! { PowerUpKind::JumpBoost },
+            boost_name => todo!("Unknown boost {boost_name}"),
+        };
+
+        quote! {
+            PowerUp {
+                kind: #powerup,
+                location: Vector2D::new(Number::from_raw(#x), Number::from_raw(#y)),
+            }
+        }
+    });
+
+    quote! {
+        pub static POWER_UPS: &[PowerUp] = &[#(#powerups),*];
     }
 }

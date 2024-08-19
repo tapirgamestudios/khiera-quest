@@ -4,6 +4,7 @@ use agb_fixnum::Vector2D;
 use util::{Collider, Number, ScrollStop};
 
 mod map {
+    use super::*;
     use agb_fixnum::Vector2D;
     use util::*;
 
@@ -74,3 +75,15 @@ pub fn get_platform_tile_chunk(x: i32, y: i32) -> &'static [MapTileSetting] {
         None => ALL_TRANSPARENT,
     }
 }
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum PowerUpKind {
+    JumpBoost,
+}
+
+pub struct PowerUp {
+    pub location: Vector2D<Number>,
+    pub kind: PowerUpKind,
+}
+
+pub use map::POWER_UPS;

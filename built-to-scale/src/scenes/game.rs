@@ -1,16 +1,13 @@
 mod powerups;
 
 use agb::{
-    display::{
-        affine::AffineMatrix,
-        object::{Sprite, SpriteLoader},
-        HEIGHT, WIDTH,
-    },
+    display::{affine::AffineMatrix, object::Sprite, HEIGHT, WIDTH},
     fixnum::{num, Rect, Vector2D},
 };
 
 use alloc::vec::Vec;
-use powerups::{PowerUp, PowerUpObject};
+use map::PowerUpKind;
+use powerups::PowerUpObject;
 use util::{Circle, Collider, Number};
 
 use crate::resources::{self, BUBBLE, BUBBLE_POP};
@@ -172,9 +169,9 @@ impl Player {
         }
     }
 
-    fn apply_powerup(&mut self, powerup: PowerUp) {
+    fn apply_powerup(&mut self, powerup: PowerUpKind) {
         match powerup {
-            PowerUp::JumpBoost => {
+            PowerUpKind::JumpBoost => {
                 self.jump_speed = num!(3.5);
             }
         }
@@ -217,10 +214,7 @@ impl Game {
 
             terrain: Terrain {},
 
-            powerups: Vec::from([PowerUpObject::new(
-                PowerUp::JumpBoost,
-                Vector2D::new((-93).into(), (-638).into()),
-            )]),
+            powerups: map::POWER_UPS.iter().map(PowerUpObject::new).collect(),
         }
     }
 
