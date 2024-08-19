@@ -175,7 +175,7 @@ impl Player {
     fn apply_powerup(&mut self, powerup: PowerUp) {
         match powerup {
             PowerUp::JumpBoost => {
-                self.jump_speed = num!(3.);
+                self.jump_speed = num!(3.5);
             }
         }
     }
