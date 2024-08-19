@@ -234,8 +234,6 @@ impl Game {
             self.camera.position.x.floor(),
             self.camera.position.y.floor(),
         ) {
-            agb::println!("{:?}", self.camera.position);
-            agb::println!("{:?}", scroll_stop);
             if let Some(x_min) = scroll_stop.minimum_x {
                 self.camera.position.x = self.camera.position.x.max(x_min);
             }
