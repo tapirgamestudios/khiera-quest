@@ -170,6 +170,8 @@ impl Player {
             JumpState::Falling => resources::FALL.sprite(0),
         }
     }
+
+    fn apply_powerup(&mut self, powerup: PowerUp) {}
 }
 
 pub struct Game {
@@ -468,9 +470,15 @@ impl Scene for Game {
                 - (WIDTH / 2, HEIGHT / 2).into(),
         );
 
-        for powerup in self.powerups.iter() {
-            powerup.update(self.player.position);
-        }
+        self.powerups.retain_mut(|powerup| {
+            if let Some(powerup) = powerup.update(self.player.position) {
+                self.player.apply_powerup(powerup);
+
+                return false;
+            }
+
+            true
+        });
     }
 
     fn display(&mut self, display: &mut super::Display) {
