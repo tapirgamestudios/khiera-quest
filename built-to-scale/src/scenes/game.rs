@@ -1,8 +1,16 @@
+mod powerups;
+
 use agb::{
-    display::{affine::AffineMatrix, object::Sprite, HEIGHT, WIDTH},
+    display::{
+        affine::AffineMatrix,
+        object::{Sprite, SpriteLoader},
+        HEIGHT, WIDTH,
+    },
     fixnum::{num, Rect, Vector2D},
 };
 
+use alloc::vec::Vec;
+use powerups::{PowerUp, PowerUpObject};
 use util::{Circle, Collider, Number};
 
 use crate::resources::{self, BUBBLE, BUBBLE_POP};
@@ -170,6 +178,8 @@ pub struct Game {
     terrain: Terrain,
     last_gravity_source: Option<&'static Collider>,
     player_state: PlayerState,
+
+    powerups: Vec<PowerUpObject>,
 }
 
 impl Game {
@@ -196,6 +206,11 @@ impl Game {
             },
 
             terrain: Terrain {},
+
+            powerups: Vec::from([PowerUpObject::new(
+                PowerUp::JumpBoost,
+                Vector2D::new((-93).into(), (-638).into()),
+            )]),
         }
     }
 
@@ -452,6 +467,10 @@ impl Scene for Game {
             (self.camera.position + (num!(0.5), num!(0.5)).into()).floor()
                 - (WIDTH / 2, HEIGHT / 2).into(),
         );
+
+        for powerup in self.powerups.iter() {
+            powerup.update(self.player.position);
+        }
     }
 
     fn display(&mut self, display: &mut super::Display) {
@@ -491,6 +510,10 @@ impl Scene for Game {
                         + (WIDTH / 2, HEIGHT / 2).into(),
                 );
             }
+        }
+
+        for powerup in self.powerups.iter() {
+            powerup.display(self.camera.position, display);
         }
     }
 }
