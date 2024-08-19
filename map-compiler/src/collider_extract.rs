@@ -262,7 +262,10 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
         ColliderTag::Killision,
     ));
 
-    o.into_iter().flat_map(|x| x.colliders).collect()
+    o.into_iter()
+        .filter(|x| x.name.is_empty())
+        .flat_map(|x| x.colliders)
+        .collect()
 }
 
 fn coordinates_to_generate_box_list_from<T>(
