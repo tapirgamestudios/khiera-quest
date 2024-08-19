@@ -402,8 +402,7 @@ impl Scene for Game {
     fn update(&mut self, update: &mut Update) {
         match &mut self.player_state {
             PlayerState::Playing {
-                remaining_pop_time,
-                pop_location,
+                remaining_pop_time, ..
             } => {
                 *remaining_pop_time = remaining_pop_time.saturating_sub(1);
 
