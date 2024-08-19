@@ -1,0 +1,24 @@
+{
+  "name": "player",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "esbuild   src/index.tsx --bundle --format=esm --loader:.png=file --outdir=public --watch --servedir=public ",
+    "build": "rm -rf build && esbuild src/index.tsx --bundle --format=esm --loader:.png=file --minify --outdir=./build && cp public/* build/"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "description": "",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "styled-components": "^6.1.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "esbuild": "^0.23.0",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/styled-components": "^5.1.34"
+  }
+}
