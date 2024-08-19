@@ -2100,7 +2100,7 @@
   <object id="186" name="Jump Boost" x="-92.5" y="-638">
    <point/>
   </object>
-  <object id="187" name="Speed Boost" x="-62" y="-567.5">
+  <object id="187" name="Speed Boost" x="-57.625" y="-572.375">
    <point/>
   </object>
  </objectgroup>

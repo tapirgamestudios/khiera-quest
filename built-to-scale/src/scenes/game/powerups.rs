@@ -68,7 +68,7 @@ impl PowerUpObject {
 
         display.display_regular(
             powerup_sprite(self.kind, frame_amount),
-            self.location - camera_location - (num!(16.), num!(16.)).into()
+            self.location - camera_location - (num!(8.), num!(8.)).into()
                 + (WIDTH / 2, HEIGHT / 2).into(),
         );
     }
