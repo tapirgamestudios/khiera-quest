@@ -37,6 +37,12 @@ enum GroundState {
     InAir,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DashState {
+    Available,
+    Used,
+}
+
 struct RecoveringState {
     recover_to: Vector2D<Number>,
     starting_from: Vector2D<Number>,
@@ -67,6 +73,9 @@ struct Player {
     ground_speed: Number,
     air_speed: Number,
 
+    can_dash: bool,
+    dash_state: DashState,
+
     frame: usize,
 }
 
@@ -88,23 +97,32 @@ impl Player {
         (self.angle.b, -self.angle.a).into()
     }
 
-    fn handle_direction_input(&mut self, x: i32) {
+    fn handle_direction_input(&mut self, x: i32, is_dashing: bool) {
         if x != 0 {
+            let dash =
+                if self.can_dash && is_dashing && self.dash_state == DashState::Available && x != 0
+                {
+                    self.dash_state = DashState::Used;
+                    num!(3.)
+                } else {
+                    num!(0.)
+                };
+
             let (acceleration, normal) = if self.is_on_ground() {
                 if self.surface_normal.dot(self.get_normal()) > num!(0.7) {
                     (
-                        Vector2D::new(0.into(), Number::new(x)) * self.ground_speed,
+                        Vector2D::new(0.into(), Number::new(x)) * (self.ground_speed + dash),
                         self.surface_normal,
                     )
                 } else {
                     (
-                        Vector2D::new(0.into(), Number::new(x)) * self.ground_speed,
+                        Vector2D::new(0.into(), Number::new(x)) * (self.ground_speed + dash),
                         self.get_normal(),
                     )
                 }
             } else {
                 (
-                    Vector2D::new(0.into(), Number::new(x)) * self.air_speed,
+                    Vector2D::new(0.into(), Number::new(x)) * (self.air_speed + dash),
                     self.get_normal(),
                 )
             };
@@ -176,7 +194,7 @@ impl Player {
             PowerUpKind::JumpBoost => {
                 self.jump_speed = num!(3.5);
             }
-            PowerUpKind::SpeedBoost => self.ground_speed = num!(0.5),
+            PowerUpKind::SpeedBoost => self.can_dash = true,
         }
     }
 }
@@ -210,6 +228,9 @@ impl Game {
                 ground_speed: num!(0.25),
                 air_speed: num!(0.0625),
 
+                can_dash: false,
+                dash_state: DashState::Available,
+
                 frame: 0,
             },
             last_gravity_source: None,
@@ -224,8 +245,8 @@ impl Game {
         }
     }
 
-    fn handle_direction_input(&mut self, x: i32) {
-        self.player.handle_direction_input(x);
+    fn handle_direction_input(&mut self, x: i32, is_dashing: bool) {
+        self.player.handle_direction_input(x, is_dashing);
     }
 
     fn handle_jump_input(&mut self) {
@@ -325,6 +346,7 @@ impl Game {
                 if value > num!(0.8) {
                     // approximately < 45 degree angle. So definitely on the ground
                     self.player.jump_state = JumpState::HasJump;
+                    self.player.dash_state = DashState::Available;
 
                     // Apply a reasonably high amount of friction
                     self.player.speed *= num!(0.8);
@@ -333,6 +355,7 @@ impl Game {
                 } else if value > num!(0.7) {
                     // just over 45 degrees (since 0.7 ~= sqrt(2) / 2). Still should be considered ground, but apply less friction
                     self.player.jump_state = JumpState::HasJump; // should allow for another jump
+                    self.player.dash_state = DashState::Available;
                     self.player.speed *= num!(0.90);
 
                     GroundState::OnGround
@@ -432,7 +455,7 @@ impl Scene for Game {
                 *remaining_pop_time = remaining_pop_time.saturating_sub(1);
 
                 let button_press = update.button_x_tri();
-                self.handle_direction_input(button_press as i32);
+                self.handle_direction_input(button_press as i32, update.is_dash_pressed());
                 self.physics_frame(update.jump_pressed());
 
                 if update.jump_just_pressed() {
