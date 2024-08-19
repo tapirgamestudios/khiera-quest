@@ -68,7 +68,7 @@ impl Player {
         if x != 0 {
             let (acceleration, normal) = if self.is_on_ground() {
                 (
-                    Vector2D::new(0.into(), Number::new(x) / 8),
+                    Vector2D::new(0.into(), Number::new(x) / 4),
                     self.surface_normal,
                 )
             } else {
@@ -236,7 +236,6 @@ impl Game {
 
         self.player.ground_state = match self.handle_collider_collisions(colliders) {
             Some(value) => {
-                agb::println!("{value}");
                 if value > num!(0.8) {
                     // approximately < 45 degree angle. So definitely on the ground
                     self.player.jump_state = JumpState::HasJump;
@@ -248,7 +247,7 @@ impl Game {
                 } else if value > num!(0.7) {
                     // just over 45 degrees (since 0.7 ~= sqrt(2) / 2). Still should be considered ground, but apply less friction
                     self.player.jump_state = JumpState::HasJump;
-                    self.player.speed *= num!(0.95);
+                    self.player.speed *= num!(0.90);
 
                     GroundState::OnGround // should allow for another jump
                 } else {
