@@ -398,7 +398,6 @@ impl Scene for Game {
                         let time = recover.time as i32 - 16;
                         let time = Number::new(time) / (64 - 16);
 
-                        agb::println!("{:?}", recover.starting_reverse_local_gravity);
                         let start_position_line = recover.starting_from
                             + recover.starting_reverse_local_gravity * time * 30;
                         let ending_position_line = recover.recover_to
