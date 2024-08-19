@@ -52,3 +52,4 @@ extract_statics!(
 pub static JUMP_SOUND: &[u8] = include_wav!("game-sfx/jump.wav");
 pub static POWER_UP_SOUND: &[u8] = include_wav!("game-sfx/power_up.wav");
 pub static DASH_SOUND: &[u8] = include_wav!("game-sfx/dash.wav");
+pub static LAND_GROUND: &[u8] = include_wav!("game-sfx/land_ground.wav");

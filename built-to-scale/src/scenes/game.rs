@@ -346,18 +346,21 @@ impl Game {
         }
     }
 
-    fn physics_frame(&mut self, jump_pressed: bool) {
+    fn physics_frame(&mut self, update: &mut Update) {
         let colliders: &[&Collider] = self.terrain.colliders(self.player.position);
 
         let gravity_source = self.get_gravity_source(colliders);
 
         let gravity_direction = (gravity_source - self.player.position).fast_normalise();
 
-        let gravity = if self.player.jump_state == JumpState::Jumping && jump_pressed {
+        let gravity = if self.player.jump_state == JumpState::Jumping && update.jump_pressed() {
             gravity_direction / 128
         } else {
             gravity_direction / 10
         };
+
+        let old_speed = self.player.speed;
+        let was_on_ground = self.player.is_on_ground();
 
         self.player.speed += gravity;
 
@@ -393,6 +396,11 @@ impl Game {
                 GroundState::InAir
             }
         };
+
+        let is_on_ground = self.player.is_on_ground();
+        if !was_on_ground && is_on_ground && old_speed.dot(gravity_direction) > 1.into() {
+            update.play_sfx(resources::LAND_GROUND);
+        }
 
         if self.player.speed.magnitude_squared() < num!(0.005) {
             self.player.speed = (0, 0).into();
@@ -478,7 +486,7 @@ impl Scene for Game {
 
                 let button_press = update.button_x_tri();
                 self.handle_direction_input(button_press as i32, update.is_dash_pressed(), update);
-                self.physics_frame(update.jump_pressed());
+                self.physics_frame(update);
 
                 if update.jump_just_pressed() && self.handle_jump_input() {
                     update.play_sfx(resources::JUMP_SOUND);
