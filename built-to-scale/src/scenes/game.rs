@@ -67,10 +67,17 @@ impl Player {
     fn handle_direction_input(&mut self, x: i32) {
         if x != 0 {
             let (acceleration, normal) = if self.is_on_ground() {
-                (
-                    Vector2D::new(0.into(), Number::new(x) / 4),
-                    self.surface_normal,
-                )
+                if self.surface_normal.dot(self.get_normal()) > num!(0.7) {
+                    (
+                        Vector2D::new(0.into(), Number::new(x) / 4),
+                        self.surface_normal,
+                    )
+                } else {
+                    (
+                        Vector2D::new(0.into(), Number::new(x) / 4),
+                        self.get_normal(),
+                    )
+                }
             } else {
                 (
                     Vector2D::new(0.into(), Number::new(x) / 16),
