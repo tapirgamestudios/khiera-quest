@@ -83,13 +83,19 @@ fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usize>> 
     hs
 }
 
+struct ColliderGroup {
+    name: String,
+    class: String,
+    colliders: Vec<Collider>,
+}
+
 fn extract_from_layer<'a>(
     layer: impl Iterator<Item = Object<'a>>,
     tag: ColliderTag,
-) -> Vec<Collider> {
-    let mut colliders = Vec::new();
-
+) -> Vec<ColliderGroup> {
+    let mut all_colliders = Vec::new();
     for object in layer {
+        let mut colliders = Vec::new();
         match &object.shape {
             tiled::ObjectShape::Rect { width, height } => {
                 handle_points_for_collider(
@@ -131,9 +137,15 @@ fn extract_from_layer<'a>(
             }
             _ => unimplemented!("Use of unsupported shape, {:?}", object.shape),
         }
+
+        all_colliders.push(ColliderGroup {
+            name: object.name.clone(),
+            class: object.user_type.clone(),
+            colliders,
+        })
     }
 
-    colliders
+    all_colliders
 }
 
 fn handle_points_for_collider(
@@ -250,7 +262,7 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
         ColliderTag::Killision,
     ));
 
-    o
+    o.into_iter().flat_map(|x| x.colliders).collect()
 }
 
 fn coordinates_to_generate_box_list_from<T>(
