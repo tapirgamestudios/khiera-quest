@@ -66,6 +66,7 @@ struct Player {
     jump_state: JumpState,
     facing: PlayerFacing,
     ground_state: GroundState,
+    jump_speed: Number,
 
     frame: usize,
 }
@@ -133,7 +134,7 @@ impl Player {
             if dot < 0.into() {
                 self.speed -= normal * dot;
             }
-            self.speed += normal * num!(2.2);
+            self.speed += normal * self.jump_speed;
 
             self.position += self.speed;
 
@@ -171,7 +172,13 @@ impl Player {
         }
     }
 
-    fn apply_powerup(&mut self, powerup: PowerUp) {}
+    fn apply_powerup(&mut self, powerup: PowerUp) {
+        match powerup {
+            PowerUp::JumpBoost => {
+                self.jump_speed = num!(3.);
+            }
+        }
+    }
 }
 
 pub struct Game {
@@ -198,6 +205,7 @@ impl Game {
                 facing: PlayerFacing::Right,
                 ground_state: GroundState::InAir,
                 surface_normal: (0, 0).into(),
+                jump_speed: num!(2.2),
 
                 frame: 0,
             },
