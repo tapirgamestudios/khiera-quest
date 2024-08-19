@@ -32,6 +32,19 @@ enum GroundState {
     InAir,
 }
 
+struct RecoveringState {
+    recover_to: Vector2D<Number>,
+    starting_from: Vector2D<Number>,
+    starting_reverse_local_gravity: Vector2D<Number>,
+    destination_reverse_local_gravity: Vector2D<Number>,
+    time: u32,
+}
+
+enum PlayerState {
+    Playing,
+    Recovering(RecoveringState),
+}
+
 struct Player {
     // the angle the player is facing, corresponding to local gravity
     angle: AffineMatrix,
@@ -153,6 +166,7 @@ pub struct Game {
     player: Player,
     terrain: Terrain,
     last_gravity_source: Option<&'static Collider>,
+    player_state: PlayerState,
 }
 
 impl Game {
@@ -173,6 +187,7 @@ impl Game {
                 frame: 0,
             },
             last_gravity_source: None,
+            player_state: PlayerState::Playing,
 
             terrain: Terrain {},
         }
@@ -186,6 +201,28 @@ impl Game {
         self.player.handle_jump_input();
     }
 
+    fn handle_player_death(&mut self) {
+        let point_to_recover_to = map::get_recovery_point(self.player.position);
+        self.player_state = PlayerState::Recovering(RecoveringState {
+            recover_to: point_to_recover_to,
+            starting_from: self.player.position,
+            starting_reverse_local_gravity: (self.player.position
+                - self
+                    .last_gravity_source
+                    .unwrap()
+                    .closest_point(self.player.position))
+            .fast_normalise(),
+            destination_reverse_local_gravity: (point_to_recover_to
+                - get_gravity_source(
+                    self.terrain.colliders(point_to_recover_to),
+                    point_to_recover_to,
+                )
+                .1)
+                .fast_normalise(),
+            time: 0,
+        });
+    }
+
     /// returns the cosine of the smallest angle of collision if there is one. So None = not touching the ground
     fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> Option<Number> {
         let mut max_angle = None;
@@ -196,22 +233,26 @@ impl Game {
                 radius: 8.into(),
             };
             if collider.collides_circle(&player_circle) {
-                let normal = collider.normal_circle(&player_circle);
+                if collider.tag.is_kills_player() {
+                    self.handle_player_death();
+                } else if collider.tag.is_collision() {
+                    let normal = collider.normal_circle(&player_circle);
 
-                self.player.surface_normal = normal;
+                    self.player.surface_normal = normal;
 
-                let dot = normal.dot(self.player.speed);
-                if dot < 0.into() {
-                    self.player.speed -= normal * dot;
+                    let dot = normal.dot(self.player.speed);
+                    if dot < 0.into() {
+                        self.player.speed -= normal * dot;
+                    }
+
+                    let cosine_of_floor_angle = self.player.get_normal().dot(normal);
+                    // 0.7 is approximately sqrt(2) / 2 which is about 45 degrees
+                    max_angle = Some(max_angle.unwrap_or(num!(-1.)).max(cosine_of_floor_angle));
+
+                    let overshoot = collider.overshoot(&player_circle);
+
+                    self.player.position += overshoot;
                 }
-
-                let cosine_of_floor_angle = self.player.get_normal().dot(normal);
-                // 0.7 is approximately sqrt(2) / 2 which is about 45 degrees
-                max_angle = Some(max_angle.unwrap_or(num!(-1.)).max(cosine_of_floor_angle));
-
-                let overshoot = collider.overshoot(&player_circle);
-
-                self.player.position += overshoot;
             }
         }
 
@@ -225,15 +266,8 @@ impl Game {
                 .expect("We should have a gravity source if we're in empty space");
             source.closest_point(self.player.position)
         } else {
-            let (gravity_source_collider, gravity_source_position) = colliders
-                .iter()
-                .copied()
-                .filter(|x| x.tag.is_gravitational())
-                .map(|collider| (collider, collider.closest_point(self.player.position)))
-                .min_by_key(|&(_, closest_point)| {
-                    (closest_point - self.player.position).magnitude_squared()
-                })
-                .unwrap();
+            let (gravity_source_collider, gravity_source_position) =
+                get_gravity_source(colliders, self.player.position);
 
             self.last_gravity_source = Some(gravity_source_collider);
             gravity_source_position
@@ -322,23 +356,65 @@ impl Game {
     }
 }
 
+fn get_gravity_source(
+    colliders: &[&'static Collider],
+    position: Vector2D<Number>,
+) -> (&'static Collider, Vector2D<Number>) {
+    colliders
+        .iter()
+        .copied()
+        .filter(|x| x.tag.is_gravitational())
+        .map(|collider| (collider, collider.closest_point(position)))
+        .min_by_key(|&(_, closest_point)| (closest_point - position).magnitude_squared())
+        .unwrap()
+}
+
 impl Scene for Game {
     fn transition(&mut self, transition: &mut super::Transition) -> Option<super::TransitionScene> {
         None
     }
 
     fn update(&mut self, update: &mut Update) {
-        let button_press = update.button_x_tri();
-        self.handle_direction_input(button_press as i32);
-        self.physics_frame(update.jump_pressed());
+        match &mut self.player_state {
+            PlayerState::Playing => {
+                let button_press = update.button_x_tri();
+                self.handle_direction_input(button_press as i32);
+                self.physics_frame(update.jump_pressed());
 
-        if update.jump_just_pressed() {
-            self.handle_jump_input();
+                if update.jump_just_pressed() {
+                    self.handle_jump_input();
+                }
+
+                self.player.frame();
+            }
+            PlayerState::Recovering(recover) => {
+                recover.time += 1;
+                match recover.time {
+                    0..16 => {
+                        self.player.speed = (0, 0).into();
+                    }
+                    16..64 => {
+                        let time = recover.time as i32 - 16;
+                        let time = Number::new(time) / (64 - 16);
+
+                        agb::println!("{:?}", recover.starting_reverse_local_gravity);
+                        let start_position_line = recover.starting_from
+                            + recover.starting_reverse_local_gravity * time * 30;
+                        let ending_position_line = recover.recover_to
+                            + recover.destination_reverse_local_gravity * (-time + 1) * 30;
+
+                        let position =
+                            start_position_line * (-time + 1) + ending_position_line * time;
+
+                        self.player.position = position;
+                    }
+                    64..80 => {}
+                    80.. => self.player_state = PlayerState::Playing,
+                }
+            }
         }
 
-        self.player.frame();
         self.update_camera();
-
         update.set_pos(
             (self.camera.position + (num!(0.5), num!(0.5)).into()).floor()
                 - (WIDTH / 2, HEIGHT / 2).into(),

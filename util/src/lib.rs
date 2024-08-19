@@ -26,6 +26,10 @@ impl ColliderTag {
     pub fn is_kills_player(self) -> bool {
         self == ColliderTag::Killision
     }
+
+    pub fn is_collision(self) -> bool {
+        self == ColliderTag::CollisionGravitational || self == ColliderTag::CollisionOnly
+    }
 }
 
 #[derive(Clone, Debug)]
