@@ -5,7 +5,10 @@ use agb::{
 use map::{PowerUp, PowerUpKind};
 use util::Number;
 
-use crate::{resources, scenes::Display};
+use crate::{
+    resources,
+    scenes::{Display, Update},
+};
 
 fn powerup_sprite(powerup: PowerUpKind, frame_amount: usize) -> &'static Sprite {
     match powerup {
@@ -40,7 +43,11 @@ impl PowerUpObject {
 
     // If none, then do nothing
     // If some, then give the player the power up returned
-    pub fn update(&mut self, player_location: Vector2D<Number>) -> Option<PowerUpKind> {
+    pub fn update(
+        &mut self,
+        player_location: Vector2D<Number>,
+        update: &mut Update,
+    ) -> Option<PowerUpKind> {
         self.frame += 1;
 
         if self.state == PowerUpState::Collecting && self.frame > 32 {
@@ -52,6 +59,8 @@ impl PowerUpObject {
         if self.state == PowerUpState::Idle && player_distance_sq < (16 * 16).into() {
             self.state = PowerUpState::Collecting;
             self.frame = 0;
+
+            update.play_sfx(resources::POWER_UP_SOUND);
         }
 
         None

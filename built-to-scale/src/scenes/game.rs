@@ -480,7 +480,7 @@ impl Scene for Game {
                 self.physics_frame(update.jump_pressed());
 
                 if update.jump_just_pressed() && self.handle_jump_input() {
-                    update.play_sfx(&resources::JUMP_SOUND);
+                    update.play_sfx(resources::JUMP_SOUND);
                 }
 
                 self.player.frame();
@@ -523,7 +523,7 @@ impl Scene for Game {
         );
 
         self.powerups.retain_mut(|powerup| {
-            if let Some(powerup) = powerup.update(self.player.position) {
+            if let Some(powerup) = powerup.update(self.player.position, update) {
                 self.player.apply_powerup(powerup);
 
                 return false;
