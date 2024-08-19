@@ -21,17 +21,27 @@ enum PlayerFacing {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum JumpState {
-    OnGround,
+    HasJump,
     Jumping,
     Falling,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum GroundState {
+    OnGround,
+    InAir,
+}
+
 struct Player {
+    // the angle the player is facing, corresponding to local gravity
     angle: AffineMatrix,
+    // the normal of the surface the player is on, not the gravity source
+    surface_normal: Vector2D<Number>,
     speed: Vector2D<Number>,
     position: Vector2D<Number>,
     jump_state: JumpState,
     facing: PlayerFacing,
+    ground_state: GroundState,
 
     frame: usize,
 }
@@ -56,13 +66,17 @@ impl Player {
 
     fn handle_direction_input(&mut self, x: i32) {
         if x != 0 {
-            let acceleration: Vector2D<Number> = if self.is_on_ground() {
-                Vector2D::new(0.into(), Number::new(x) / 8)
+            let (acceleration, normal) = if self.is_on_ground() {
+                (
+                    Vector2D::new(0.into(), Number::new(x) / 8),
+                    self.surface_normal,
+                )
             } else {
-                Vector2D::new(0.into(), Number::new(x) / 10)
+                (
+                    Vector2D::new(0.into(), Number::new(x) / 16),
+                    self.get_normal(),
+                )
             };
-
-            let normal = self.get_normal();
 
             let rotated_acceleration = (
                 normal.x * acceleration.x - normal.y * acceleration.y,
@@ -81,10 +95,10 @@ impl Player {
     }
 
     fn handle_jump_input(&mut self) {
-        if self.is_on_ground() {
+        if self.jump_state == JumpState::HasJump {
             let normal = self.get_normal();
 
-            self.speed += normal * num!(4.);
+            self.speed += normal * num!(2.2);
             self.position += self.speed;
 
             self.jump_state = JumpState::Jumping;
@@ -104,12 +118,12 @@ impl Player {
     }
 
     fn is_on_ground(&self) -> bool {
-        self.jump_state == JumpState::OnGround
+        self.ground_state == GroundState::OnGround
     }
 
     fn sprite(&self) -> &'static Sprite {
         match self.jump_state {
-            JumpState::OnGround => {
+            JumpState::HasJump => {
                 if self.speed.magnitude_squared() < num!(0.1) {
                     resources::IDLE.sprite(0)
                 } else {
@@ -140,6 +154,8 @@ impl Game {
                 position: map::START_POINT,
                 jump_state: JumpState::Falling,
                 facing: PlayerFacing::Right,
+                ground_state: GroundState::InAir,
+                surface_normal: (0, 0).into(),
 
                 frame: 0,
             },
@@ -164,6 +180,8 @@ impl Game {
             };
             if collider.collides_circle(&player_circle) {
                 let normal = collider.normal_circle(&player_circle);
+
+                self.player.surface_normal = normal;
 
                 let dot = normal.dot(self.player.speed);
                 if dot < 0.into() {
@@ -202,19 +220,23 @@ impl Game {
 
         let gravity = if self.player.jump_state == JumpState::Jumping && jump_pressed {
             gravity_direction / 128
-        } else if self.player.jump_state == JumpState::OnGround {
-            gravity_direction / 10
         } else {
-            gravity_direction / 5
+            gravity_direction / 10
         };
 
         self.player.speed += gravity;
 
-        if self.handle_collider_collisions(colliders) {
-            self.player.jump_state = JumpState::OnGround;
+        self.player.ground_state = if self.handle_collider_collisions(colliders) {
+            GroundState::OnGround
+        } else {
+            GroundState::InAir
+        };
+
+        if self.player.is_on_ground() {
+            self.player.jump_state = JumpState::HasJump;
             self.player.speed *= num!(0.8);
         } else {
-            self.player.speed *= num!(0.9);
+            self.player.speed *= num!(0.95);
         }
 
         if self.player.speed.magnitude_squared() < num!(0.005) {
