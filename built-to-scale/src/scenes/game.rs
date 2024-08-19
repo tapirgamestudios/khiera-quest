@@ -152,6 +152,7 @@ pub struct Game {
     camera: Camera,
     player: Player,
     terrain: Terrain,
+    last_gravity_source: Option<&'static Collider>,
 }
 
 impl Game {
@@ -171,6 +172,8 @@ impl Game {
 
                 frame: 0,
             },
+            last_gravity_source: None,
+
             terrain: Terrain {},
         }
     }
@@ -215,23 +218,34 @@ impl Game {
         max_angle
     }
 
-    fn physics_frame(&mut self, jump_pressed: bool) {
-        let colliders = self.terrain.colliders(self.player.position);
-
-        // work out the gravity to use
-        let gravity_source = colliders
-            .iter()
-            .filter(|x| x.gravitational)
-            .map(|collider| collider.closest_point(self.player.position))
-            .min_by_key(|&closest_point| {
-                (closest_point - self.player.position).magnitude_squared()
-            });
-
-        let gravity_direction = if let Some(gravity_source) = gravity_source {
-            (gravity_source - self.player.position).fast_normalise()
+    fn get_gravity_source(&mut self, colliders: &[&'static Collider]) -> Vector2D<Number> {
+        if colliders.is_empty() {
+            let source = self
+                .last_gravity_source
+                .expect("We should have a gravity source if we're in empty space");
+            source.closest_point(self.player.position)
         } else {
-            (0, 0).into()
-        };
+            let (gravity_source_collider, gravity_source_position) = colliders
+                .iter()
+                .copied()
+                .filter(|x| x.gravitational)
+                .map(|collider| (collider, collider.closest_point(self.player.position)))
+                .min_by_key(|&(_, closest_point)| {
+                    (closest_point - self.player.position).magnitude_squared()
+                })
+                .unwrap();
+
+            self.last_gravity_source = Some(gravity_source_collider);
+            gravity_source_position
+        }
+    }
+
+    fn physics_frame(&mut self, jump_pressed: bool) {
+        let colliders: &[&Collider] = self.terrain.colliders(self.player.position);
+
+        let gravity_source = self.get_gravity_source(colliders);
+
+        let gravity_direction = (gravity_source - self.player.position).fast_normalise();
 
         let gravity = if self.player.jump_state == JumpState::Jumping && jump_pressed {
             gravity_direction / 128
