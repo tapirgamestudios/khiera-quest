@@ -1683,10 +1683,10 @@
   </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" name="PLAYER" x="-159.347" y="-39.9847">
+  <object id="47" name="PLAYER" x="-184" y="-80">
    <point/>
   </object>
-  <object id="86" name="CAMERA" x="-130.05" y="55.5453">
+  <object id="86" name="CAMERA" x="-112" y="40">
    <point/>
   </object>
  </objectgroup>
