@@ -105,7 +105,7 @@ fn entry(mut gba: agb::Gba) -> ! {
         button_controller.update();
 
         {
-            let mut update = Update::new(&button_controller);
+            let mut update = Update::new(&button_controller, &mut mixer);
 
             scene.frame(&mut update);
 

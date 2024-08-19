@@ -145,7 +145,8 @@ impl Player {
         }
     }
 
-    fn handle_jump_input(&mut self) {
+    /// returns whether or not the jump actually happened
+    fn handle_jump_input(&mut self) -> bool {
         if self.jump_state == JumpState::HasJump {
             let normal = self.get_normal();
 
@@ -160,7 +161,11 @@ impl Player {
             self.jump_state = JumpState::Jumping;
             self.jumps_remaining -= 1;
             self.frame = 0;
+
+            return true;
         }
+
+        false
     }
 
     fn rendered_position(&self) -> Vector2D<Number> {
@@ -202,7 +207,10 @@ impl Player {
                 self.jump_speed = num!(3.5);
             }
             PowerUpKind::Dash => self.can_dash = true,
-            PowerUpKind::DoubleJump => self.max_jumps += 1,
+            PowerUpKind::DoubleJump => {
+                self.max_jumps += 1;
+                self.jumps_remaining += 1;
+            }
         }
     }
 }
@@ -259,8 +267,9 @@ impl Game {
         self.player.handle_direction_input(x, is_dashing);
     }
 
-    fn handle_jump_input(&mut self) {
-        self.player.handle_jump_input();
+    /// returns whether or not the jump actually happened
+    fn handle_jump_input(&mut self) -> bool {
+        self.player.handle_jump_input()
     }
 
     fn handle_player_death(&mut self) {
@@ -470,8 +479,8 @@ impl Scene for Game {
                 self.handle_direction_input(button_press as i32, update.is_dash_pressed());
                 self.physics_frame(update.jump_pressed());
 
-                if update.jump_just_pressed() {
-                    self.handle_jump_input();
+                if update.jump_just_pressed() && self.handle_jump_input() {
+                    update.play_sfx(&resources::JUMP_SOUND);
                 }
 
                 self.player.frame();

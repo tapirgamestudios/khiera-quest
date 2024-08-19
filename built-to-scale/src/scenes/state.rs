@@ -7,19 +7,22 @@ use agb::{
     },
     fixnum::Vector2D,
     input::{Button, ButtonController, Tri},
+    sound::mixer::{Mixer, SoundChannel},
 };
 use util::Number;
 
-pub struct Update<'a> {
+pub struct Update<'a, 'b> {
     button: &'a ButtonController,
     new_pos: Option<Vector2D<i32>>,
+    mixer: &'a mut Mixer<'b>,
 }
 
-impl<'a> Update<'a> {
-    pub fn new(button: &'a ButtonController) -> Self {
+impl<'a, 'b> Update<'a, 'b> {
+    pub fn new(button: &'a ButtonController, mixer: &'a mut Mixer<'b>) -> Self {
         Self {
             button,
             new_pos: None,
+            mixer,
         }
     }
 
@@ -32,7 +35,7 @@ impl<'a> Update<'a> {
     }
 }
 
-impl Update<'_> {
+impl Update<'_, '_> {
     pub fn button_x_tri(&self) -> Tri {
         self.button.x_tri()
     }
@@ -47,6 +50,10 @@ impl Update<'_> {
 
     pub fn is_dash_pressed(&self) -> bool {
         self.button.is_just_pressed(Button::B)
+    }
+
+    pub fn play_sfx(&mut self, effect: &'static [u8]) {
+        self.mixer.play_sound(SoundChannel::new(effect));
     }
 }
 

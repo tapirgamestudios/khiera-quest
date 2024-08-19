@@ -1,4 +1,4 @@
-use agb::{display::object::Graphics, include_aseprite, include_background_gfx};
+use agb::{display::object::Graphics, include_aseprite, include_background_gfx, include_wav};
 
 static SPRITES: &Graphics = include_aseprite!(
     "gfx/astronaut.aseprite",
@@ -48,3 +48,5 @@ extract_statics!(
         DASH,
     ]
 );
+
+pub static JUMP_SOUND: &[u8] = include_wav!("game-sfx/jump.wav");
