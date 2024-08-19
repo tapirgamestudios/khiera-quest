@@ -6,7 +6,7 @@ use std::{
 use agb_fixnum::Vector2D;
 use nalgebra::{Vector2, Vector3};
 use proc_macro2::TokenStream;
-use tiled::{Map, ObjectLayer, PropertyValue};
+use tiled::{Map, Object, ObjectShape, PropertyValue};
 use util::{Arc, Circle, Collider, ColliderKind, ColliderTag, Line, Number};
 
 use quote::quote;
@@ -80,10 +80,13 @@ fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usize>> 
     hs
 }
 
-fn extract_from_layer(layer: &ObjectLayer, tag: ColliderTag) -> Vec<Collider> {
+fn extract_from_layer<'a>(
+    layer: impl Iterator<Item = Object<'a>>,
+    tag: ColliderTag,
+) -> Vec<Collider> {
     let mut colliders = Vec::new();
 
-    for object in layer.objects() {
+    for object in layer {
         match &object.shape {
             tiled::ObjectShape::Rect { width, height } => {
                 handle_points_for_collider(
@@ -223,10 +226,25 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
         .find_map(|x| x.as_object_layer())
         .unwrap();
 
-    let mut o = extract_from_layer(&gravitational_objects, ColliderTag::CollisionGravitational);
+    let killision = map
+        .layers()
+        .filter(|x| x.name == "Killision")
+        .find_map(|x| x.as_object_layer())
+        .unwrap();
+
+    let mut o = extract_from_layer(
+        gravitational_objects.objects(),
+        ColliderTag::CollisionGravitational,
+    );
     o.extend(extract_from_layer(
-        &non_gravitattional_objects,
+        non_gravitattional_objects.objects(),
         ColliderTag::CollisionOnly,
+    ));
+    o.extend(extract_from_layer(
+        killision
+            .objects()
+            .filter(|x| !matches!(x.shape, tiled::ObjectShape::Point(_, _))),
+        ColliderTag::Killision,
     ));
 
     o
@@ -326,6 +344,34 @@ fn get_3_and_first_gravity(
     resultant
 }
 
+fn extract_recovery_points(map: &Map) -> Vec<Vector2D<Number>> {
+    let layer = map
+        .layers()
+        .filter(|x| x.name == "Killision")
+        .find_map(|x| x.as_object_layer())
+        .unwrap();
+
+    layer
+        .objects()
+        .filter_map(|x| {
+            if let ObjectShape::Point(x, y) = x.shape {
+                Some((Number::from_f32(x), Number::from_f32(y)).into())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn quote_vec(vector: Vector2D<Number>) -> TokenStream {
+    let x = vector.x.to_raw();
+    let y = vector.y.to_raw();
+
+    quote! {
+        Vector2D::new(Number::from_raw(#x), Number::from_raw(#y))
+    }
+}
+
 pub fn assemble_colliders(map: &Map) -> String {
     let colliders = extract_colliders(map);
     let spacial_colliders = spacial_colliders(&colliders);
@@ -341,15 +387,6 @@ pub fn assemble_colliders(map: &Map) -> String {
     );
 
     let colliders_quote = colliders.iter().map(|x| {
-        fn quote_vec(vector: Vector2D<Number>) -> TokenStream {
-            let x = vector.x.to_raw();
-            let y = vector.y.to_raw();
-
-            quote! {
-                Vector2D::new(Number::from_raw(#x), Number::from_raw(#y))
-            }
-        }
-
         let kind = match &x.kind {
             ColliderKind::Circle(c) => {
                 let position = quote_vec(c.position);
@@ -427,12 +464,20 @@ pub fn assemble_colliders(map: &Map) -> String {
     }
 
     let collider_phf_code = collider_phf.build();
+
+    let recovery_points = extract_recovery_points(map);
+    let recovery_points = recovery_points.into_iter().map(quote_vec);
+
     format!(
         "{}{};",
         quote! {
             pub const BOX_SIZE: i32 = #BOX_SIZE;
 
             static COLLIDERS: &[Collider] = &[#(#colliders_quote),*];
+
+            pub static RECOVERY_POINTS: &[Vector2D<Number>] = &[
+                #(#recovery_points),*
+            ];
 
             pub static NEARBY_COLLIDERS: phf::Map<[i32; 2], &'static [&'static Collider]> =
         },

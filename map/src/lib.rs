@@ -1,5 +1,6 @@
 #![no_std]
-use util::{Collider, ScrollStop};
+use agb_fixnum::Vector2D;
+use util::{Collider, Number, ScrollStop};
 
 mod map {
     use agb_fixnum::Vector2D;
@@ -9,6 +10,14 @@ mod map {
 }
 
 pub use map::{CAMERA_START, START_POINT};
+
+pub fn get_recovery_point(position: Vector2D<Number>) -> Vector2D<Number> {
+    map::RECOVERY_POINTS
+        .iter()
+        .copied()
+        .min_by_key(|&x| (x - position).magnitude_squared())
+        .unwrap()
+}
 
 pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
     let x = x / map::BOX_SIZE;
