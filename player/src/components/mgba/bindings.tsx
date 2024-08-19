@@ -3,13 +3,13 @@ import styled from "styled-components";
 
 function DefaultBindings(): KeyBindings {
   return {
-    A: "Z",
-    B: "X",
+    A: "X",
+    B: "Z",
     L: "A",
     R: "S",
     Start: "Enter",
-    Select: "Shift",
-    Up: "UP",
+    Select: "BACKSPACE",
+    Up: "UP",   
     Down: "DOWN",
     Left: "LEFT",
     Right: "RIGHT",
