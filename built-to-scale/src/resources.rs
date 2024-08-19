@@ -1,6 +1,6 @@
 use agb::{display::object::Graphics, include_aseprite, include_background_gfx};
 
-static SPRITES: &Graphics = include_aseprite!("gfx/astronaut.aseprite");
+static SPRITES: &Graphics = include_aseprite!("gfx/astronaut.aseprite", "gfx/bubble.aseprite");
 
 include_background_gfx!(backgrounds, "000000",
     dummy => deduplicate "gfx/sprites.aseprite",
@@ -30,4 +30,4 @@ macro_rules! extract_statics {
     };
 }
 
-extract_statics!(SPRITES, [IDLE, WALK, JUMP, FALL]);
+extract_statics!(SPRITES, [IDLE, WALK, JUMP, FALL, BUBBLE, BUBBLE_POP]);

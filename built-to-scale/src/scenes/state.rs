@@ -61,7 +61,7 @@ impl<'a, 'b> Display<'a, 'b> {
 }
 
 impl Display<'_, '_> {
-    pub fn object(
+    pub fn affine_object(
         &mut self,
         sprite: &'static Sprite,
         affine: AffineMatrix,
@@ -85,6 +85,19 @@ impl Display<'_, '_> {
         o
     }
 
+    pub fn regular_object(
+        &mut self,
+        sprite: &'static Sprite,
+        position: Vector2D<Number>,
+    ) -> ObjectUnmanaged {
+        let mut o = ObjectUnmanaged::new(self.sprite_loader.get_vram_sprite(sprite));
+
+        o.show();
+        o.set_position(position.floor());
+
+        o
+    }
+
     pub fn display(
         &mut self,
         sprite: &'static Sprite,
@@ -92,7 +105,12 @@ impl Display<'_, '_> {
         position: Vector2D<Number>,
         hflip: bool,
     ) {
-        let object = self.object(sprite, *affine, position, hflip);
+        let object = self.affine_object(sprite, *affine, position, hflip);
+        self.oam_iter.set_next(&object);
+    }
+
+    pub fn display_regular(&mut self, sprite: &'static Sprite, position: Vector2D<Number>) {
+        let object = self.regular_object(sprite, position);
         self.oam_iter.set_next(&object);
     }
 }

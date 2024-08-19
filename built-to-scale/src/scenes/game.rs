@@ -5,7 +5,7 @@ use agb::{
 
 use util::{Circle, Collider, Number};
 
-use crate::resources;
+use crate::resources::{self, BUBBLE, BUBBLE_POP};
 
 use super::{Scene, Update};
 
@@ -41,7 +41,10 @@ struct RecoveringState {
 }
 
 enum PlayerState {
-    Playing,
+    Playing {
+        remaining_pop_time: u32,
+        pop_location: Vector2D<Number>,
+    },
     Recovering(RecoveringState),
 }
 
@@ -187,7 +190,10 @@ impl Game {
                 frame: 0,
             },
             last_gravity_source: None,
-            player_state: PlayerState::Playing,
+            player_state: PlayerState::Playing {
+                remaining_pop_time: 0,
+                pop_location: (0, 0).into(),
+            },
 
             terrain: Terrain {},
         }
@@ -395,7 +401,12 @@ impl Scene for Game {
 
     fn update(&mut self, update: &mut Update) {
         match &mut self.player_state {
-            PlayerState::Playing => {
+            PlayerState::Playing {
+                remaining_pop_time,
+                pop_location,
+            } => {
+                *remaining_pop_time = remaining_pop_time.saturating_sub(1);
+
                 let button_press = update.button_x_tri();
                 self.handle_direction_input(button_press as i32);
                 self.physics_frame(update.jump_pressed());
@@ -427,7 +438,12 @@ impl Scene for Game {
                         self.player.position = position;
                     }
                     64..80 => {}
-                    80.. => self.player_state = PlayerState::Playing,
+                    80.. => {
+                        self.player_state = PlayerState::Playing {
+                            remaining_pop_time: BUBBLE_POP.sprites().len() as u32 * 2,
+                            pop_location: self.player.position,
+                        }
+                    }
                 }
             }
         }
@@ -440,14 +456,43 @@ impl Scene for Game {
     }
 
     fn display(&mut self, display: &mut super::Display) {
-        display.display(
-            self.player.sprite(),
-            &self.player.angle,
-            self.player.rendered_position() - self.camera.position
-                + (num!(0.5), num!(0.5)).into()
-                + (WIDTH / 2, HEIGHT / 2).into(),
-            self.player.facing != PlayerFacing::Right,
-        );
+        match &self.player_state {
+            PlayerState::Playing {
+                remaining_pop_time,
+                pop_location,
+            } => {
+                display.display(
+                    self.player.sprite(),
+                    &self.player.angle,
+                    self.player.rendered_position() - self.camera.position
+                        + (num!(0.5), num!(0.5)).into()
+                        + (WIDTH / 2, HEIGHT / 2).into(),
+                    self.player.facing != PlayerFacing::Right,
+                );
+
+                if *remaining_pop_time > 0 {
+                    let idx =
+                        ((BUBBLE_POP.sprites().len() as i32 * 2 - *remaining_pop_time as i32) / 2)
+                            .try_into()
+                            .unwrap_or_default();
+                    display.display_regular(
+                        BUBBLE_POP.animation_sprite(idx),
+                        *pop_location - (16, 16).into() - self.camera.position
+                            + (num!(0.5), num!(0.5)).into()
+                            + (WIDTH / 2, HEIGHT / 2).into(),
+                    );
+                }
+            }
+            PlayerState::Recovering(state) => {
+                let idx = state.time as usize / 2;
+                display.display_regular(
+                    BUBBLE.animation_sprite(idx),
+                    self.player.position - (16, 16).into() - self.camera.position
+                        + (num!(0.5), num!(0.5)).into()
+                        + (WIDTH / 2, HEIGHT / 2).into(),
+                );
+            }
+        }
     }
 }
 
