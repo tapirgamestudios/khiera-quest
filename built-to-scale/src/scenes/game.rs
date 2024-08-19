@@ -714,7 +714,7 @@ impl Terrain {
     fn display(&self, display: &mut super::Display, camera_position: Vector2D<Number>) {
         for collider in self.loaded_dynamic_colliders.iter() {
             if (collider.current_position - camera_position).magnitude_squared()
-                < ((WIDTH + HEIGHT) * (WIDTH + HEIGHT)).into()
+                < (WIDTH * WIDTH / 3).into()
             {
                 let image = convert_sprite(collider.path.image);
                 display.display_regular(
