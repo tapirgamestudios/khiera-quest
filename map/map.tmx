@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="10" nextobjectid="184">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="10" nextobjectid="186">
  <tileset firstgid="1" source="planets.tsx"/>
  <tileset firstgid="1025" source="platforms.tsx"/>
  <tileset firstgid="2049" source="planets2.tsx"/>
@@ -1919,15 +1919,12 @@
   <object id="178" x="-24.75" y="-678.25">
    <polygon points="0.636364,-1.18182 40,51 38.75,71.5 25.5,87 5.375,98.625 -24.625,101.063 -43.375,83.9375 -60,56.25 -59.5,32.75 -43.5,12.5 -15.25,-2.25"/>
   </object>
-  <object id="182" name="SLIME_MOON" type="MOVING" x="-126.125" y="-679.25">
-   <properties>
-    <property name="Path" value="slime_moon1"/>
-   </properties>
-   <polygon points="0,0 1.8125,-14.625 7.8125,-20.625 22.4375,-20.75 28.375,-13.75 26.25,-0.125 19.4375,6.4375 4.9375,5.3125"/>
+  <object id="185" name="SLIME_MOON" type="slime_moon1" x="-126.5" y="-700.75" width="27.875" height="27.875">
+   <ellipse/>
   </object>
  </objectgroup>
  <objectgroup id="9" name="Paths">
-  <object id="183" name="slime_moon1" x="-111.818" y="-687.636">
+  <object id="183" name="slime_moon1" x="-112.068" y="-687.511">
    <polygon points="-3.6875,-5 36.3636,-32.9091 119.091,-46 167.091,-8.72727 185.455,73.0909 176.364,123.636 101.818,160.727 29.6364,166.364 -17.8182,107.455 -21.8182,41.0909"/>
   </object>
  </objectgroup>
@@ -2074,10 +2071,10 @@
   </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" name="PLAYER" x="1027.83" y="-586.833">
+  <object id="47" name="PLAYER" x="15.8333" y="-676.167">
    <point/>
   </object>
-  <object id="86" name="CAMERA" x="1068.33" y="-575">
+  <object id="86" name="CAMERA" x="56.3333" y="-664.333">
    <point/>
   </object>
  </objectgroup>
