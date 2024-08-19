@@ -99,12 +99,13 @@ impl Player {
         (self.angle.b, -self.angle.a).into()
     }
 
-    fn handle_direction_input(&mut self, x: i32, is_dashing: bool) {
+    fn handle_direction_input(&mut self, x: i32, is_dashing: bool, update: &mut Update) {
         if x != 0 {
             let dash =
                 if self.can_dash && is_dashing && self.dash_state == DashState::Available && x != 0
                 {
                     self.dash_state = DashState::Used;
+                    update.play_sfx(resources::DASH_SOUND);
                     num!(3.)
                 } else {
                     num!(0.)
@@ -263,8 +264,8 @@ impl Game {
         }
     }
 
-    fn handle_direction_input(&mut self, x: i32, is_dashing: bool) {
-        self.player.handle_direction_input(x, is_dashing);
+    fn handle_direction_input(&mut self, x: i32, is_dashing: bool, update: &mut Update) {
+        self.player.handle_direction_input(x, is_dashing, update);
     }
 
     /// returns whether or not the jump actually happened
@@ -476,7 +477,7 @@ impl Scene for Game {
                 *remaining_pop_time = remaining_pop_time.saturating_sub(1);
 
                 let button_press = update.button_x_tri();
-                self.handle_direction_input(button_press as i32, update.is_dash_pressed());
+                self.handle_direction_input(button_press as i32, update.is_dash_pressed(), update);
                 self.physics_frame(update.jump_pressed());
 
                 if update.jump_just_pressed() && self.handle_jump_input() {
