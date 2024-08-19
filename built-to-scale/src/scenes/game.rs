@@ -176,8 +176,10 @@ impl Game {
         self.player.handle_jump_input();
     }
 
-    fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> bool {
-        let mut on_ground = false;
+    /// returns the cosine of the smallest angle of collision if there is one. So None = not touching the ground
+    fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> Option<Number> {
+        let mut max_angle = None;
+
         for collider in colliders {
             let player_circle = Circle {
                 position: self.player.position,
@@ -193,16 +195,17 @@ impl Game {
                     self.player.speed -= normal * dot;
                 }
 
-                if self.player.get_normal().dot(normal) > num!(0.8) {
-                    on_ground = true;
-                }
+                let cosine_of_floor_angle = self.player.get_normal().dot(normal);
+                // 0.7 is approximately sqrt(2) / 2 which is about 45 degrees
+                max_angle = Some(max_angle.unwrap_or(num!(-1.)).max(cosine_of_floor_angle));
 
                 let overshoot = collider.overshoot(&player_circle);
 
                 self.player.position += overshoot;
             }
         }
-        on_ground
+
+        max_angle
     }
 
     fn physics_frame(&mut self, jump_pressed: bool) {
@@ -231,18 +234,35 @@ impl Game {
 
         self.player.speed += gravity;
 
-        self.player.ground_state = if self.handle_collider_collisions(colliders) {
-            GroundState::OnGround
-        } else {
-            GroundState::InAir
-        };
+        self.player.ground_state = match self.handle_collider_collisions(colliders) {
+            Some(value) => {
+                agb::println!("{value}");
+                if value > num!(0.8) {
+                    // approximately < 45 degree angle. So definitely on the ground
+                    self.player.jump_state = JumpState::HasJump;
 
-        if self.player.is_on_ground() {
-            self.player.jump_state = JumpState::HasJump;
-            self.player.speed *= num!(0.8);
-        } else {
-            self.player.speed *= num!(0.95);
-        }
+                    // Apply a reasonably high amount of friction
+                    self.player.speed *= num!(0.8);
+
+                    GroundState::OnGround
+                } else if value > num!(0.7) {
+                    // just over 45 degrees (since 0.7 ~= sqrt(2) / 2). Still should be considered ground, but apply less friction
+                    self.player.jump_state = JumpState::HasJump;
+                    self.player.speed *= num!(0.95);
+
+                    GroundState::OnGround // should allow for another jump
+                } else {
+                    // hit something which isn't floor-like
+                    self.player.speed *= num!(0.95);
+                    GroundState::InAir
+                }
+            }
+            None => {
+                // hit something which isn't floor-like
+                self.player.speed *= num!(0.95);
+                GroundState::InAir
+            }
+        };
 
         if self.player.speed.magnitude_squared() < num!(0.005) {
             self.player.speed = (0, 0).into();
