@@ -66,15 +66,17 @@ struct Player {
     surface_normal: Vector2D<Number>,
     speed: Vector2D<Number>,
     position: Vector2D<Number>,
-    jump_state: JumpState,
     facing: PlayerFacing,
     ground_state: GroundState,
-    jump_speed: Number,
     ground_speed: Number,
     air_speed: Number,
 
     can_dash: bool,
     dash_state: DashState,
+    max_jumps: usize,
+    jumps_remaining: usize,
+    jump_state: JumpState,
+    jump_speed: Number,
 
     frame: usize,
 }
@@ -156,6 +158,7 @@ impl Player {
             self.position += self.speed;
 
             self.jump_state = JumpState::Jumping;
+            self.jumps_remaining -= 1;
             self.frame = 0;
         }
     }
@@ -167,7 +170,11 @@ impl Player {
     fn frame(&mut self) {
         self.frame = self.frame.wrapping_add(1);
         if self.jump_state == JumpState::Jumping && self.frame > 32 {
-            self.jump_state = JumpState::Falling;
+            if self.jumps_remaining > 0 {
+                self.jump_state = JumpState::HasJump;
+            } else {
+                self.jump_state = JumpState::Falling;
+            }
         }
     }
 
@@ -230,6 +237,8 @@ impl Game {
 
                 can_dash: false,
                 dash_state: DashState::Available,
+                jumps_remaining: 1,
+                max_jumps: 1,
 
                 frame: 0,
             },
@@ -347,6 +356,7 @@ impl Game {
                     // approximately < 45 degree angle. So definitely on the ground
                     self.player.jump_state = JumpState::HasJump;
                     self.player.dash_state = DashState::Available;
+                    self.player.jumps_remaining = self.player.max_jumps;
 
                     // Apply a reasonably high amount of friction
                     self.player.speed *= num!(0.8);
@@ -356,6 +366,7 @@ impl Game {
                     // just over 45 degrees (since 0.7 ~= sqrt(2) / 2). Still should be considered ground, but apply less friction
                     self.player.jump_state = JumpState::HasJump; // should allow for another jump
                     self.player.dash_state = DashState::Available;
+                    self.player.jumps_remaining = self.player.max_jumps;
                     self.player.speed *= num!(0.90);
 
                     GroundState::OnGround
