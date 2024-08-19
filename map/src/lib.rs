@@ -31,8 +31,8 @@ pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
 }
 
 pub fn get_scroll_stop(x: i32, y: i32) -> Option<&'static ScrollStop> {
-    let x = x / map::SCROLL_STOP_BOX;
-    let y = y / map::SCROLL_STOP_BOX;
+    let x = x.div_floor(map::SCROLL_STOP_BOX);
+    let y = y.div_floor(map::SCROLL_STOP_BOX);
 
     map::SCROLL_STOPS.get(&[x, y])
 }

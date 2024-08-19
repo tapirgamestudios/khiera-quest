@@ -53,12 +53,12 @@ pub fn get_scroll_stops(map: &Map) -> String {
             let start = line[0].1.min(line[1].1) as i32;
             let end = line[0].1.max(line[1].1) as i32;
 
-            let x = line[0].0 as i32 / SCROLL_BOX_SIZE;
+            let x = (line[0].0 as i32).div_floor(SCROLL_BOX_SIZE);
             let direction_x = x + direction;
             let start_x = x.min(direction_x);
             let end_x = x.max(direction_x);
 
-            let start = start / SCROLL_BOX_SIZE;
+            let start = start.div_floor(SCROLL_BOX_SIZE);
             let end = end.div_ceil(SCROLL_BOX_SIZE);
             for y in start..=end {
                 for x in start_x..=end_x {
@@ -78,12 +78,12 @@ pub fn get_scroll_stops(map: &Map) -> String {
             let start = line[0].0.min(line[1].0) as i32;
             let end = line[0].0.max(line[1].0) as i32;
 
-            let x = line[0].1 as i32 / SCROLL_BOX_SIZE;
+            let x = (line[0].1 as i32).div_floor(SCROLL_BOX_SIZE);
             let direction_x = x + direction;
             let start_x = x.min(direction_x);
             let end_x = x.max(direction_x);
 
-            let start = start / SCROLL_BOX_SIZE;
+            let start = start.div_floor(SCROLL_BOX_SIZE);
             let end = end.div_ceil(SCROLL_BOX_SIZE);
             for x in start..=end {
                 for y in start_x..=end_x {
