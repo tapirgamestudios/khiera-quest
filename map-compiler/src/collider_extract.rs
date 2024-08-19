@@ -315,9 +315,13 @@ pub fn assemble_colliders(map: &Map) -> String {
     let spacial_colliders = spacial_colliders(&colliders);
     let boxed_up = get_3_and_first_gravity(&colliders, &spacial_colliders);
 
+    let max_collider_box = boxed_up.iter().max_by_key(|(_, x)| x.len()).unwrap();
+
     println!(
-        "cargo::warning=Maximum number of colliders in a box = {}",
-        boxed_up.values().map(|x| x.len()).max().unwrap()
+        "cargo::warning=Maximum number of colliders in a box = {} at ({}, {})",
+        max_collider_box.1.len(),
+        max_collider_box.0 .0 * BOX_SIZE,
+        max_collider_box.0 .1 * BOX_SIZE
     );
 
     let colliders_quote = colliders.iter().map(|x| {
