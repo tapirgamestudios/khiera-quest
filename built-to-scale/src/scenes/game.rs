@@ -64,6 +64,8 @@ struct Player {
     facing: PlayerFacing,
     ground_state: GroundState,
     jump_speed: Number,
+    ground_speed: Number,
+    air_speed: Number,
 
     frame: usize,
 }
@@ -91,18 +93,18 @@ impl Player {
             let (acceleration, normal) = if self.is_on_ground() {
                 if self.surface_normal.dot(self.get_normal()) > num!(0.7) {
                     (
-                        Vector2D::new(0.into(), Number::new(x) / 4),
+                        Vector2D::new(0.into(), Number::new(x)) * self.ground_speed,
                         self.surface_normal,
                     )
                 } else {
                     (
-                        Vector2D::new(0.into(), Number::new(x) / 4),
+                        Vector2D::new(0.into(), Number::new(x)) * self.ground_speed,
                         self.get_normal(),
                     )
                 }
             } else {
                 (
-                    Vector2D::new(0.into(), Number::new(x) / 16),
+                    Vector2D::new(0.into(), Number::new(x)) * self.air_speed,
                     self.get_normal(),
                 )
             };
@@ -174,6 +176,7 @@ impl Player {
             PowerUpKind::JumpBoost => {
                 self.jump_speed = num!(3.5);
             }
+            PowerUpKind::SpeedBoost => self.ground_speed = num!(0.5),
         }
     }
 }
@@ -202,7 +205,10 @@ impl Game {
                 facing: PlayerFacing::Right,
                 ground_state: GroundState::InAir,
                 surface_normal: (0, 0).into(),
+
                 jump_speed: num!(2.2),
+                ground_speed: num!(0.25),
+                air_speed: num!(0.0625),
 
                 frame: 0,
             },

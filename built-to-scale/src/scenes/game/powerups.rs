@@ -10,6 +10,7 @@ use crate::{resources, scenes::Display};
 fn powerup_sprite(powerup: PowerUpKind, frame_amount: usize) -> &'static Sprite {
     match powerup {
         PowerUpKind::JumpBoost => resources::JUMP_BOOST.animation_sprite(frame_amount),
+        PowerUpKind::SpeedBoost => resources::SPEED_BOOST.animation_sprite(frame_amount),
     }
 }
 

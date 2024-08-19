@@ -36,5 +36,14 @@ macro_rules! extract_statics {
 
 extract_statics!(
     SPRITES,
-    [IDLE, WALK, JUMP, FALL, BUBBLE, BUBBLE_POP, JUMP_BOOST]
+    [
+        IDLE,
+        WALK,
+        JUMP,
+        FALL,
+        BUBBLE,
+        BUBBLE_POP,
+        JUMP_BOOST,
+        SPEED_BOOST
+    ]
 );

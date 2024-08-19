@@ -79,6 +79,7 @@ pub fn get_platform_tile_chunk(x: i32, y: i32) -> &'static [MapTileSetting] {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum PowerUpKind {
     JumpBoost,
+    SpeedBoost,
 }
 
 pub struct PowerUp {
