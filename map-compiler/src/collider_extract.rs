@@ -7,7 +7,7 @@ use agb_fixnum::Vector2D;
 use nalgebra::{Vector2, Vector3};
 use proc_macro2::TokenStream;
 use tiled::{Map, ObjectLayer, PropertyValue};
-use util::{Arc, Circle, Collider, ColliderKind, Line, Number};
+use util::{Arc, Circle, Collider, ColliderKind, ColliderTag, Line, Number};
 
 use quote::quote;
 
@@ -80,7 +80,7 @@ fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usize>> 
     hs
 }
 
-fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider> {
+fn extract_from_layer(layer: &ObjectLayer, tag: ColliderTag) -> Vec<Collider> {
     let mut colliders = Vec::new();
 
     for object in layer.objects() {
@@ -90,7 +90,7 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
                     object,
                     &[(0., 0.), (*width, 0.), (*width, *height), (0., *height)],
                     &mut colliders,
-                    gravitational,
+                    tag,
                     true,
                 );
             }
@@ -111,7 +111,7 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
                         position,
                         radius: Number::from_f32(*width / 2.),
                     }),
-                    gravitational,
+                    tag,
                 });
             }
             tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
@@ -119,7 +119,7 @@ fn extract_from_layer(layer: &ObjectLayer, gravitational: bool) -> Vec<Collider>
                     object,
                     points,
                     &mut colliders,
-                    gravitational,
+                    tag,
                     matches!(&object.shape, tiled::ObjectShape::Polygon { .. }),
                 );
             }
@@ -134,7 +134,7 @@ fn handle_points_for_collider(
     object: tiled::Object,
     points: &[(f32, f32)],
     colliders: &mut Vec<Collider>,
-    gravitational: bool,
+    tag: ColliderTag,
     is_polygon: bool,
 ) {
     let origin = Vector2::new(object.x, object.y);
@@ -155,7 +155,7 @@ fn handle_points_for_collider(
         colliders.extend(get_line_colliders(
             Vector2::new(points[0].0, points[0].1) + origin,
             Vector2::new(points[1].0, points[1].1) + origin,
-            gravitational,
+            tag,
         ));
 
         return;
@@ -168,14 +168,7 @@ fn handle_points_for_collider(
         let o = Vector2::new(o.0, o.1) + origin;
         let b = Vector2::new(b.0, b.1) + origin;
 
-        modified_points.push(rounded_line_collider(
-            a,
-            o,
-            b,
-            radius,
-            gravitational,
-            colliders,
-        ));
+        modified_points.push(rounded_line_collider(a, o, b, radius, tag, colliders));
     };
 
     for x in points.windows(3) {
@@ -195,32 +188,24 @@ fn handle_points_for_collider(
 
     let mut current = modified_points[0].1;
     for (new_end, next_start) in modified_points.iter().skip(1) {
-        colliders.extend(get_line_colliders(current, *new_end, gravitational));
+        colliders.extend(get_line_colliders(current, *new_end, tag));
 
         current = *next_start;
     }
 
     if is_polygon {
-        colliders.extend(get_line_colliders(
-            current,
-            modified_points[0].0,
-            gravitational,
-        ));
+        colliders.extend(get_line_colliders(current, modified_points[0].0, tag));
     } else {
         // need to manually attach the start and end lines
         let start_point = Vector2::new(points[0].0, points[0].1) + origin;
         let end_point =
             Vector2::new(points[points.len() - 1].0, points[points.len() - 1].1) + origin;
 
-        colliders.extend(get_line_colliders(
-            start_point,
-            modified_points[0].0,
-            gravitational,
-        ));
+        colliders.extend(get_line_colliders(start_point, modified_points[0].0, tag));
         colliders.extend(get_line_colliders(
             modified_points[modified_points.len() - 1].1,
             end_point,
-            gravitational,
+            tag,
         ));
     }
 }
@@ -238,8 +223,11 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
         .find_map(|x| x.as_object_layer())
         .unwrap();
 
-    let mut o = extract_from_layer(&gravitational_objects, true);
-    o.extend(extract_from_layer(&non_gravitattional_objects, false));
+    let mut o = extract_from_layer(&gravitational_objects, ColliderTag::CollisionGravitational);
+    o.extend(extract_from_layer(
+        &non_gravitattional_objects,
+        ColliderTag::CollisionOnly,
+    ));
 
     o
 }
@@ -310,7 +298,7 @@ fn get_3_and_first_gravity(
                 let (idx, _) = colliders
                     .iter()
                     .enumerate()
-                    .filter(|(_, x)| x.gravitational)
+                    .filter(|(_, x)| x.tag.is_gravitational())
                     .map(|(idx, collider)| (idx, collider.closest_point(center_of_box)))
                     .min_by_key(|&(_, closest_point)| {
                         (closest_point - center_of_box).magnitude_squared()
@@ -409,11 +397,21 @@ pub fn assemble_colliders(map: &Map) -> String {
                 }
             }
         };
-        let gravitational = x.gravitational;
+        let tag = match x.tag {
+            util::ColliderTag::CollisionOnly => quote! {
+                ColliderTag::CollisionOnly
+            },
+            util::ColliderTag::CollisionGravitational => quote! {
+                ColliderTag::CollisionGravitational
+            },
+            util::ColliderTag::Killision => quote! {
+                ColliderTag::Killision
+            },
+        };
         quote! {
             Collider {
                 kind: #kind,
-                gravitational: #gravitational
+                tag: #tag
             }
         }
     });
@@ -448,7 +446,7 @@ fn rounded_line_collider(
     o: Vector2<f32>,
     b: Vector2<f32>,
     mut radius: f32,
-    gravitational: bool,
+    tag: ColliderTag,
     colliders: &mut Vec<Collider>,
 ) -> (Vector2<f32>, Vector2<f32>) {
     let x = a - o;
@@ -478,7 +476,7 @@ fn rounded_line_collider(
                 position: to_vec(circle_center),
                 radius: Number::from_f32(radius),
             }),
-            gravitational,
+            tag,
         });
     } else {
         colliders.push(Collider {
@@ -490,7 +488,7 @@ fn rounded_line_collider(
                 start_pos: to_vec((p1 - c).normalize()),
                 end_pos: to_vec((p2 - c).normalize()),
             }),
-            gravitational,
+            tag,
         })
     }
 
@@ -501,11 +499,7 @@ fn to_vec(a: Vector2<f32>) -> Vector2D<Number> {
     (Number::from_f32(a.x), Number::from_f32(a.y)).into()
 }
 
-fn get_line_colliders(
-    start: Vector2<f32>,
-    end: Vector2<f32>,
-    gravitational: bool,
-) -> Vec<Collider> {
+fn get_line_colliders(start: Vector2<f32>, end: Vector2<f32>, tag: ColliderTag) -> Vec<Collider> {
     let normalized = (end - start).normalize();
     let normal = Vector2::new(normalized.y, -normalized.x);
     let length = (start - end).magnitude();
@@ -526,7 +520,7 @@ fn get_line_colliders(
                 normal: to_vec(normal),
                 length: Number::from_f32(segment_length),
             }),
-            gravitational,
+            tag,
         });
 
         start = end;

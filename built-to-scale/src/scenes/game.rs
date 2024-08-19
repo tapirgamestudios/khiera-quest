@@ -228,7 +228,7 @@ impl Game {
             let (gravity_source_collider, gravity_source_position) = colliders
                 .iter()
                 .copied()
-                .filter(|x| x.gravitational)
+                .filter(|x| x.tag.is_gravitational())
                 .map(|collider| (collider, collider.closest_point(self.player.position)))
                 .min_by_key(|&(_, closest_point)| {
                     (closest_point - self.player.position).magnitude_squared()

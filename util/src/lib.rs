@@ -11,10 +11,27 @@ pub enum ColliderKind {
     Arc(Arc),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ColliderTag {
+    CollisionOnly,
+    CollisionGravitational,
+    Killision,
+}
+
+impl ColliderTag {
+    pub fn is_gravitational(self) -> bool {
+        self == ColliderTag::CollisionGravitational
+    }
+
+    pub fn is_kills_player(self) -> bool {
+        self == ColliderTag::Killision
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Collider {
     pub kind: ColliderKind,
-    pub gravitational: bool,
+    pub tag: ColliderTag,
 }
 
 impl Collider {
