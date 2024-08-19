@@ -4,8 +4,9 @@ use agb::{
         object::{
             AffineMatrixInstance, AffineMode, OamIterator, ObjectUnmanaged, Sprite, SpriteLoader,
         },
+        HEIGHT, WIDTH,
     },
-    fixnum::Vector2D,
+    fixnum::{num, Vector2D},
     input::{Button, ButtonController, Tri},
     sound::mixer::{Mixer, SoundChannel},
 };
@@ -116,12 +117,20 @@ impl Display<'_, '_> {
         position: Vector2D<Number>,
         hflip: bool,
     ) {
-        let object = self.affine_object(sprite, *affine, position, hflip);
+        let object = self.affine_object(
+            sprite,
+            *affine,
+            position + (num!(0.5), num!(0.5)).into() + (WIDTH / 2, HEIGHT / 2).into(),
+            hflip,
+        );
         self.oam_iter.set_next(&object);
     }
 
     pub fn display_regular(&mut self, sprite: &'static Sprite, position: Vector2D<Number>) {
-        let object = self.regular_object(sprite, position);
+        let object = self.regular_object(
+            sprite,
+            position + (num!(0.5), num!(0.5)).into() + (WIDTH / 2, HEIGHT / 2).into(),
+        );
         self.oam_iter.set_next(&object);
     }
 }

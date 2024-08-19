@@ -28,6 +28,13 @@ pub fn get_recovery_point(position: Vector2D<Number>) -> Vector2D<Number> {
         .unwrap()
 }
 
+pub fn get_paths(x: i32, y: i32) -> &'static [&'static Path] {
+    let x = x.div_floor(map::PATH_BOX_SIZE);
+    let y = y.div_floor(map::PATH_BOX_SIZE);
+
+    map::PATH_LOOKUP.get(&[x, y]).copied().unwrap_or_default()
+}
+
 pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
     let x = x.div_floor(map::BOX_SIZE);
     let y = y.div_floor(map::BOX_SIZE);

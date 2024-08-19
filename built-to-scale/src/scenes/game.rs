@@ -6,7 +6,7 @@ use agb::{
 };
 
 use alloc::vec::Vec;
-use map::PowerUpKind;
+use map::{Path, PowerUpKind};
 use powerups::PowerUpObject;
 use util::{Circle, Collider, Number};
 
@@ -217,16 +217,20 @@ impl Player {
 }
 
 pub struct Game {
+    game: GamePart,
+    terrain: Terrain,
+}
+
+struct GamePart {
     camera: Camera,
     player: Player,
-    terrain: Terrain,
-    last_gravity_source: Option<&'static Collider>,
+    last_gravity_source: Option<Collider>,
     player_state: PlayerState,
 
     powerups: Vec<PowerUpObject>,
 }
 
-impl Game {
+impl GamePart {
     pub fn new() -> Self {
         Self {
             camera: Camera {
@@ -258,8 +262,9 @@ impl Game {
                 pop_location: (0, 0).into(),
             },
 
-            terrain: Terrain {},
-
+            // terrain: Terrain {
+            //     loaded_dynamic_colliders: Vec::new(),
+            // },
             powerups: map::POWER_UPS.iter().map(PowerUpObject::new).collect(),
         }
     }
@@ -273,7 +278,7 @@ impl Game {
         self.player.handle_jump_input()
     }
 
-    fn handle_player_death(&mut self, update: &mut Update) {
+    fn handle_player_death(&mut self, update: &mut Update, terrain: &Terrain) {
         update.play_sfx(resources::RECOVERY_SOUND);
 
         let point_to_recover_to = map::get_recovery_point(self.player.position);
@@ -283,15 +288,13 @@ impl Game {
             starting_reverse_local_gravity: (self.player.position
                 - self
                     .last_gravity_source
+                    .as_ref()
                     .unwrap()
                     .closest_point(self.player.position))
             .fast_normalise(),
             destination_reverse_local_gravity: (point_to_recover_to
-                - get_gravity_source(
-                    self.terrain.colliders(point_to_recover_to),
-                    point_to_recover_to,
-                )
-                .1)
+                - get_gravity_source(terrain.colliders(point_to_recover_to), point_to_recover_to)
+                    .1)
                 .fast_normalise(),
             time: 0,
         });
@@ -300,19 +303,21 @@ impl Game {
     /// returns the cosine of the smallest angle of collision if there is one. So None = not touching the ground
     fn handle_collider_collisions(
         &mut self,
-        colliders: &[&Collider],
+
         update: &mut Update,
+        colliders: DynamicAndStaticColliders,
+        terrain: &Terrain,
     ) -> Option<Number> {
         let mut max_angle = None;
 
-        for collider in colliders {
+        for collider in colliders.iter() {
             let player_circle = Circle {
                 position: self.player.position,
                 radius: 8.into(),
             };
             if collider.collides_circle(&player_circle) {
                 if collider.tag.is_kills_player() {
-                    self.handle_player_death(update);
+                    self.handle_player_death(update, terrain);
                 } else if collider.tag.is_collision() {
                     let normal = collider.normal_circle(&player_circle);
 
@@ -337,24 +342,24 @@ impl Game {
         max_angle
     }
 
-    fn get_gravity_source(&mut self, colliders: &[&'static Collider]) -> Vector2D<Number> {
+    fn get_gravity_source(&mut self, colliders: DynamicAndStaticColliders) -> Vector2D<Number> {
         if colliders.is_empty() {
             let source = self
                 .last_gravity_source
+                .as_ref()
                 .expect("We should have a gravity source if we're in empty space");
             source.closest_point(self.player.position)
         } else {
             let (gravity_source_collider, gravity_source_position) =
                 get_gravity_source(colliders, self.player.position);
 
-            self.last_gravity_source = Some(gravity_source_collider);
+            self.last_gravity_source = Some(gravity_source_collider.clone());
             gravity_source_position
         }
     }
 
-    fn physics_frame(&mut self, update: &mut Update) {
-        let colliders: &[&Collider] = self.terrain.colliders(self.player.position);
-
+    fn physics_frame(&mut self, update: &mut Update, terrain: &Terrain) {
+        let colliders = terrain.colliders(self.player.position);
         let gravity_source = self.get_gravity_source(colliders);
 
         let gravity_direction = (gravity_source - self.player.position).fast_normalise();
@@ -370,7 +375,8 @@ impl Game {
 
         self.player.speed += gravity;
 
-        self.player.ground_state = match self.handle_collider_collisions(colliders, update) {
+        self.player.ground_state = match self.handle_collider_collisions(update, colliders, terrain)
+        {
             Some(value) => {
                 if value > num!(0.8) {
                     // approximately < 45 degree angle. So definitely on the ground
@@ -466,24 +472,19 @@ impl Game {
 }
 
 fn get_gravity_source(
-    colliders: &[&'static Collider],
+    colliders: DynamicAndStaticColliders<'_>,
     position: Vector2D<Number>,
-) -> (&'static Collider, Vector2D<Number>) {
+) -> (&Collider, Vector2D<Number>) {
     colliders
         .iter()
-        .copied()
         .filter(|x| x.tag.is_gravitational())
         .map(|collider| (collider, collider.closest_point(position)))
         .min_by_key(|&(_, closest_point)| (closest_point - position).magnitude_squared())
         .unwrap()
 }
 
-impl Scene for Game {
-    fn transition(&mut self, transition: &mut super::Transition) -> Option<super::TransitionScene> {
-        None
-    }
-
-    fn update(&mut self, update: &mut Update) {
+impl GamePart {
+    fn update(&mut self, update: &mut Update, terrain: &Terrain) {
         match &mut self.player_state {
             PlayerState::Playing {
                 remaining_pop_time, ..
@@ -492,7 +493,7 @@ impl Scene for Game {
 
                 let button_press = update.button_x_tri();
                 self.handle_direction_input(button_press as i32, update.is_dash_pressed(), update);
-                self.physics_frame(update);
+                self.physics_frame(update, terrain);
 
                 if update.jump_just_pressed() && self.handle_jump_input() {
                     update.play_sfx(resources::JUMP_SOUND);
@@ -557,9 +558,7 @@ impl Scene for Game {
                 display.display(
                     self.player.sprite(),
                     &self.player.angle,
-                    self.player.rendered_position() - self.camera.position
-                        + (num!(0.5), num!(0.5)).into()
-                        + (WIDTH / 2, HEIGHT / 2).into(),
+                    self.player.rendered_position() - self.camera.position,
                     self.player.facing != PlayerFacing::Right,
                 );
 
@@ -570,9 +569,7 @@ impl Scene for Game {
                             .unwrap_or_default();
                     display.display_regular(
                         BUBBLE_POP.animation_sprite(idx),
-                        *pop_location - (16, 16).into() - self.camera.position
-                            + (num!(0.5), num!(0.5)).into()
-                            + (WIDTH / 2, HEIGHT / 2).into(),
+                        *pop_location - (16, 16).into() - self.camera.position,
                     );
                 }
             }
@@ -580,9 +577,7 @@ impl Scene for Game {
                 let idx = state.time as usize / 2;
                 display.display_regular(
                     BUBBLE.animation_sprite(idx),
-                    self.player.position - (16, 16).into() - self.camera.position
-                        + (num!(0.5), num!(0.5)).into()
-                        + (WIDTH / 2, HEIGHT / 2).into(),
+                    self.player.position - (16, 16).into() - self.camera.position,
                 );
             }
         }
@@ -593,12 +588,146 @@ impl Scene for Game {
     }
 }
 
+impl Game {
+    pub fn new() -> Self {
+        Self {
+            game: GamePart::new(),
+            terrain: Terrain {
+                loaded_dynamic_colliders: Vec::new(),
+            },
+        }
+    }
+}
+
+impl Scene for Game {
+    fn transition(&mut self, transition: &mut super::Transition) -> Option<super::TransitionScene> {
+        None
+    }
+
+    fn update(&mut self, update: &mut Update) {
+        self.terrain.update(self.game.player.position);
+        self.game.update(update, &self.terrain);
+    }
+
+    fn display(&mut self, display: &mut super::Display) {
+        self.terrain.display(display, self.game.camera.position);
+        self.game.display(display);
+    }
+}
+
+#[derive(Copy, Clone)]
+struct DynamicAndStaticColliders<'a> {
+    static_colliders: &'static [&'static Collider],
+    dynamic_colliders: &'a [DynamicCollider],
+}
+
+impl<'a> DynamicAndStaticColliders<'a> {
+    fn iter(&self) -> impl Iterator<Item = &'a Collider> {
+        self.static_colliders.iter().copied().chain(
+            self.dynamic_colliders
+                .iter()
+                .flat_map(|x| x.colliders.iter()),
+        )
+    }
+
+    fn is_empty(&self) -> bool {
+        self.static_colliders.is_empty() && self.dynamic_colliders.is_empty()
+    }
+}
+
+struct DynamicCollider {
+    path: &'static Path,
+    current_path_element_idx: usize,
+    current_position: Vector2D<Number>,
+    colliders: Vec<Collider>,
+}
+
 struct Terrain {
-    // todo
+    loaded_dynamic_colliders: Vec<DynamicCollider>,
 }
 
 impl Terrain {
-    fn colliders(&self, position: Vector2D<Number>) -> &'static [&'static Collider] {
-        map::get_nearby(position.x.floor(), position.y.floor())
+    fn colliders(&self, position: Vector2D<Number>) -> DynamicAndStaticColliders {
+        DynamicAndStaticColliders {
+            static_colliders: map::get_nearby(position.x.floor(), position.y.floor()),
+            dynamic_colliders: &self.loaded_dynamic_colliders,
+        }
+    }
+
+    fn load_paths(&mut self, player_position: Vector2D<Number>) {
+        let should_be_loaded_paths =
+            map::get_paths(player_position.x.floor(), player_position.y.floor());
+        // remove non active paths
+        self.loaded_dynamic_colliders.retain(|x| {
+            should_be_loaded_paths
+                .iter()
+                .any(|&p| core::ptr::eq(x.path, p))
+        });
+        let paths_to_load: Vec<_> = should_be_loaded_paths
+            .iter()
+            .copied()
+            .filter(|&path| {
+                !self
+                    .loaded_dynamic_colliders
+                    .iter()
+                    .any(|x| core::ptr::eq(x.path, path))
+            })
+            .collect();
+
+        // load now active paths
+        for to_be_loaded in paths_to_load {
+            let colliders = to_be_loaded.colliders.to_vec();
+            self.loaded_dynamic_colliders.push(DynamicCollider {
+                path: to_be_loaded,
+                current_path_element_idx: 1,
+                colliders,
+                current_position: to_be_loaded.points[0],
+            });
+        }
+    }
+
+    fn update_paths(&mut self) {
+        for loaded in self.loaded_dynamic_colliders.iter_mut() {
+            let point_to_approach = loaded.path.points[loaded.current_path_element_idx];
+            let normalised = (point_to_approach - loaded.current_position).normalise() / 8;
+
+            for collider in loaded.colliders.iter_mut() {
+                collider.add_position(normalised);
+            }
+
+            loaded.current_position += normalised;
+
+            if (loaded.current_position - point_to_approach).magnitude_squared() < 5.into() {
+                loaded.current_path_element_idx += 1;
+                if loaded.current_path_element_idx >= loaded.path.points.len() {
+                    loaded.current_path_element_idx = 0;
+                }
+            }
+        }
+    }
+
+    fn update(&mut self, player_position: Vector2D<Number>) {
+        self.load_paths(player_position);
+        self.update_paths();
+    }
+
+    fn display(&self, display: &mut super::Display, camera_position: Vector2D<Number>) {
+        for collider in self.loaded_dynamic_colliders.iter() {
+            if (collider.current_position - camera_position).magnitude_squared()
+                < ((WIDTH + HEIGHT) * (WIDTH + HEIGHT)).into()
+            {
+                let image = convert_sprite(collider.path.image);
+                display.display_regular(
+                    image,
+                    collider.current_position - camera_position - (13, 12).into(),
+                );
+            }
+        }
+    }
+}
+
+fn convert_sprite(sprite: map::DynamicColliderImage) -> &'static Sprite {
+    match sprite {
+        map::DynamicColliderImage::SLIME_MOON => resources::SLIME_MOON.sprite(0),
     }
 }

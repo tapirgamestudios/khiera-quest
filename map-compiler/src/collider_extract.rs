@@ -431,7 +431,13 @@ fn extract_paths(map: &Map) -> Vec<Path> {
                 points: points
                     .iter()
                     .copied()
-                    .map(|(x, y)| (Number::from_f32(x), Number::from_f32(y)).into())
+                    .map(|(x, y)| {
+                        (
+                            Number::from_f32(x + object.x),
+                            Number::from_f32(y + object.y),
+                        )
+                            .into()
+                    })
                     .collect(),
                 complete: is_complete,
             }
@@ -468,15 +474,7 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
 
         let points = path.points.iter().copied().map(quote_vec);
 
-        let colliders = collider_group
-            .colliders
-            .iter()
-            .map(|x| {
-                let mut corrected = x.clone();
-                corrected.add_position(path.points[0]);
-                corrected
-            })
-            .map(|x| quote_collider(&x));
+        let colliders = collider_group.colliders.iter().map(quote_collider);
         let complete = path.complete;
         let image = format_ident!("{}", collider_group.name);
 
@@ -521,7 +519,12 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
     }
 
     for ((x, y), path_idx) in boxes_path_crosses_idx {
-        phf.entry([x, y], &format!("{}", quote! { &[ #(#path_idx),* ] }));
+        let references = path_idx.into_iter().map(|idx| {
+            quote! {
+                &DYNAMIC_COLLIDER_GROUPS[#idx]
+            }
+        });
+        phf.entry([x, y], &format!("{}", quote! { &[ #(#references),* ] }));
     }
 
     format!(
@@ -532,11 +535,14 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
                 #(#dynamic_collider_groups),*
             ];
 
+            #[derive(Clone, Copy)]
             pub enum DynamicColliderImage {
                 #(#dynamic_object_images),*
             }
 
-            pub static PATH_LOOKUP: phf::Map<[i32; 2], &'static [usize]> =
+            pub const PATH_BOX_SIZE: i32 = #PATH_BOX_SIZE;
+
+            pub static PATH_LOOKUP: phf::Map<[i32; 2], &'static [&'static Path]> =
 
         },
         phf.build()

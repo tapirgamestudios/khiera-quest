@@ -3,7 +3,8 @@ use agb::{display::object::Graphics, include_aseprite, include_background_gfx, i
 static SPRITES: &Graphics = include_aseprite!(
     "gfx/astronaut.aseprite",
     "gfx/bubble.aseprite",
-    "gfx/powerups.aseprite"
+    "gfx/powerups.aseprite",
+    "gfx/collideable-objects.aseprite"
 );
 
 include_background_gfx!(backgrounds, "000000",
@@ -46,6 +47,7 @@ extract_statics!(
         JUMP_BOOST,
         DOUBLE_JUMP,
         DASH,
+        SLIME_MOON,
     ]
 );
 
