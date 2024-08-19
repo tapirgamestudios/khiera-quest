@@ -11,13 +11,15 @@ use util::{Arc, Circle, Collider, ColliderKind, Line, Number};
 
 use quote::quote;
 
-use crate::spiral::SpiralIterator;
+use crate::spiral::{perimeter, SpiralIterator};
 
 /// These control the performance and ROM size
 /// The size of a box of colliders in pixels
 const BOX_SIZE: i32 = 32;
 /// The number of boxes to go out from each inner box
 const BOX_DISTANCE_FROM_INNER: usize = 4;
+
+const PLAYER_CIRCLE_APPROX_RADIUS: i32 = 8;
 
 fn occupied_boxes<F>(collider: &Collider, mut f: F)
 where
@@ -268,14 +270,40 @@ fn get_3_and_first_gravity(
 
     for (x, y) in box_list.into_iter() {
         let mut this_container: HashSet<usize> = HashSet::new();
-        for (x, y) in SpiralIterator::new((x, y)).take(9) {
-            this_container.extend(
-                spacial_colliders
-                    .get(&(x, y))
-                    .map(|x| x.as_slice())
-                    .unwrap_or_default(),
-            );
+        // add the entire box it's in
+        this_container.extend(
+            spacial_colliders
+                .get(&(x, y))
+                .map(|x| x.as_slice())
+                .unwrap_or_default(),
+        );
+
+        // look at the surrounding boxes...
+        let surrounding_containers: HashSet<_> = SpiralIterator::new((x, y))
+            .take(9)
+            .skip(1)
+            .flat_map(|(xx, yy)| spacial_colliders.get(&(xx, yy)))
+            .flatten()
+            .copied()
+            .collect();
+
+        // and go over the entire perimeter and check they could collide with the player
+        for (xx, yy) in perimeter((x * BOX_SIZE, y * BOX_SIZE), BOX_SIZE) {
+            for (collider_idx, collider) in
+                surrounding_containers.iter().map(|&x| (x, &colliders[x]))
+            {
+                if this_container.contains(&collider_idx) {
+                    continue;
+                }
+                if (collider.closest_point((xx, yy).into()) - (xx, yy).into()).magnitude_squared()
+                    <= (PLAYER_CIRCLE_APPROX_RADIUS * PLAYER_CIRCLE_APPROX_RADIUS).into()
+                {
+                    this_container.insert(collider_idx);
+                }
+            }
         }
+
+        // find closest gravity
         for xx in 0..2 {
             for yy in 0..2 {
                 let center_of_box = ((x + xx) * BOX_SIZE, (y + yy) * BOX_SIZE).into();
