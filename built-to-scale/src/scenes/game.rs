@@ -333,27 +333,45 @@ impl Game {
             self.player.position + self.player.get_normal() * 32 + self.player.speed * 64;
         let camera_rect = Rect::new(self.camera.position - camera_size / 2, camera_size);
 
-        if !camera_rect.contains_point(target_position) {
-            self.camera.position +=
-                (target_position - self.camera.position).fast_normalise() * num!(1.25);
-        }
-        if let Some(scroll_stop) = map::get_scroll_stop(
+        let camera_destination = if !camera_rect.contains_point(target_position) {
+            self.camera.position
+                + (target_position - self.camera.position).fast_normalise() * num!(1.25)
+        } else {
+            self.camera.position
+        };
+
+        let camera_destination = if let Some(scroll_stop) = map::get_scroll_stop(
             self.camera.position.x.floor(),
             self.camera.position.y.floor(),
         ) {
+            let mut camera_destination = camera_destination;
             if let Some(x_min) = scroll_stop.minimum_x {
-                self.camera.position.x = self.camera.position.x.max(x_min);
+                if self.camera.position.x >= x_min {
+                    camera_destination.x = camera_destination.x.max(x_min);
+                }
             }
             if let Some(y_min) = scroll_stop.minimum_y {
-                self.camera.position.y = self.camera.position.y.max(y_min);
+                if self.camera.position.y >= y_min {
+                    camera_destination.y = camera_destination.y.max(y_min);
+                }
             }
             if let Some(x_max) = scroll_stop.maximum_x {
-                self.camera.position.x = self.camera.position.x.min(x_max);
+                if self.camera.position.x <= x_max {
+                    camera_destination.x = camera_destination.x.min(x_max);
+                }
             }
             if let Some(y_max) = scroll_stop.maximum_y {
-                self.camera.position.y = self.camera.position.y.min(y_max);
+                if self.camera.position.y <= y_max {
+                    camera_destination.y = camera_destination.y.min(y_max);
+                }
             }
-        }
+
+            camera_destination
+        } else {
+            camera_destination
+        };
+
+        self.camera.position = camera_destination;
     }
 }
 
