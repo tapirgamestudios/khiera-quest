@@ -21,6 +21,8 @@ const BOX_DISTANCE_FROM_INNER: usize = 4;
 
 const PLAYER_CIRCLE_APPROX_RADIUS: i32 = 8;
 
+const PATH_BOX_SIZE: i32 = 1024;
+
 fn occupied_boxes<F>(collider: &Collider, mut f: F)
 where
     F: FnMut(i32, i32),
@@ -51,24 +53,36 @@ where
             }
         }
         ColliderKind::Line(line) => {
-            let start = line.start.floor();
-            let end = line.end.floor();
-            let mut current_box = (i32::MIN, i32::MIN);
-            for (x, y) in bresenham::Bresenham::new(
-                (start.x as isize, start.y as isize),
-                (end.x as isize, end.y as isize),
-            ) {
-                let this_box = (
-                    (x as i32).div_floor(BOX_SIZE),
-                    (y as i32).div_floor(BOX_SIZE),
-                );
-                if current_box != this_box {
-                    f(this_box.0, this_box.1);
-                    current_box = this_box;
-                }
+            for (x, y) in boxes_line_crosses_through(line.start.floor(), line.end.floor(), BOX_SIZE)
+            {
+                f(x, y);
             }
         }
     }
+}
+
+fn boxes_line_crosses_through(
+    start: Vector2D<i32>,
+    end: Vector2D<i32>,
+    box_size: i32,
+) -> impl Iterator<Item = (i32, i32)> {
+    let mut current_box = (i32::MIN, i32::MIN);
+    let mut iter = bresenham::Bresenham::new(
+        (start.x as isize, start.y as isize),
+        (end.x as isize, end.y as isize),
+    );
+
+    core::iter::from_fn(move || loop {
+        let (x, y) = iter.next()?;
+        let this_box = (
+            (x as i32).div_floor(box_size),
+            (y as i32).div_floor(box_size),
+        );
+        if current_box != this_box {
+            current_box = this_box;
+            return Some((this_box.0, this_box.1));
+        }
+    })
 }
 
 fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usize>> {
@@ -83,6 +97,7 @@ fn spacial_colliders(colliders: &[Collider]) -> HashMap<(i32, i32), Vec<usize>> 
     hs
 }
 
+#[derive(Clone)]
 struct ColliderGroup {
     name: String,
     class: String,
@@ -228,7 +243,7 @@ fn handle_points_for_collider(
     }
 }
 
-fn extract_colliders(map: &Map) -> Vec<Collider> {
+fn extract_colliders(map: &Map) -> Vec<ColliderGroup> {
     let gravitational_objects = map
         .layers()
         .filter(|x| x.name == "Colliders")
@@ -262,10 +277,7 @@ fn extract_colliders(map: &Map) -> Vec<Collider> {
         ColliderTag::Killision,
     ));
 
-    o.into_iter()
-        .filter(|x| x.name.is_empty())
-        .flat_map(|x| x.colliders)
-        .collect()
+    o
 }
 
 fn coordinates_to_generate_box_list_from<T>(
@@ -390,8 +402,200 @@ fn quote_vec(vector: Vector2D<Number>) -> TokenStream {
     }
 }
 
+struct Path {
+    name: String,
+    points: Vec<Vector2D<Number>>,
+    complete: bool,
+}
+
+fn extract_paths(map: &Map) -> Vec<Path> {
+    let path_layer = map
+        .layers()
+        .filter(|x| x.name == "Paths")
+        .find_map(|x| x.as_object_layer())
+        .unwrap();
+
+    path_layer
+        .objects()
+        .map(|object| {
+            let is_complete = matches!(object.shape, ObjectShape::Polygon { .. });
+
+            let points = match &object.shape {
+                ObjectShape::Polyline { points } => points,
+                ObjectShape::Polygon { points } => points,
+                _ => panic!("Path should be polyline or polygon"),
+            };
+
+            Path {
+                name: object.name.clone(),
+                points: points
+                    .iter()
+                    .copied()
+                    .map(|(x, y)| (Number::from_f32(x), Number::from_f32(y)).into())
+                    .collect(),
+                complete: is_complete,
+            }
+        })
+        .collect()
+}
+
+fn assemble_dynamic_colliders(map: &Map) -> String {
+    let dynamic_colliders: Vec<_> = extract_colliders(map)
+        .iter()
+        .filter(|&x| !x.name.is_empty())
+        .cloned()
+        .collect();
+
+    let paths = extract_paths(map);
+
+    // lookup what index the collider group is stored in
+    let collider_group_indexes: HashMap<&str, usize> = dynamic_colliders
+        .iter()
+        .enumerate()
+        .map(|(idx, x)| (x.class.as_str(), idx))
+        .collect();
+
+    let dynamic_collider_groups = paths.iter().map(|path| {
+        let collider_group_idx = collider_group_indexes
+            .get(path.name.as_str())
+            .copied()
+            .expect("Find object group for path");
+        let collider_group = &dynamic_colliders[collider_group_idx];
+
+        let points = path.points.iter().copied().map(quote_vec);
+
+        let colliders = collider_group.colliders.iter().map(quote_collider);
+        quote! {
+            (
+                &[
+                    #(#colliders),*
+                ],
+                &[
+                    #(#points),*
+                ]
+            )
+        }
+    });
+
+    let mut phf = phf_codegen::Map::new();
+
+    let mut boxes_path_crosses_idx: HashMap<(i32, i32), Vec<usize>> = HashMap::new();
+
+    for path in paths.iter() {
+        // find out which group this path is for
+        let collider_group_idx = collider_group_indexes
+            .get(path.name.as_str())
+            .copied()
+            .expect("Find object group for path");
+        let boxes_path_goes_through: HashSet<(i32, i32)> = path
+            .points
+            .windows(2)
+            .flat_map(|line| {
+                boxes_line_crosses_through(line[0].floor(), line[1].floor(), PATH_BOX_SIZE)
+            })
+            .collect();
+
+        for (x, y) in boxes_path_goes_through {
+            boxes_path_crosses_idx
+                .entry((x, y))
+                .or_default()
+                .push(collider_group_idx);
+        }
+    }
+
+    for ((x, y), path_idx) in boxes_path_crosses_idx {
+        phf.entry([x, y], &format!("{}", quote! { &[ #(#path_idx),* ] }));
+    }
+
+    format!(
+        "{}{};\n\n",
+        quote! {
+
+            pub static DYNAMIC_COLLIDER_GROUPS: &[(&[Collider], &[Vector2D<Number>])] = &[
+                #(#dynamic_collider_groups),*
+            ];
+
+            pub static PATH_LOOKUP: phf::Map<[i32; 2], &'static [usize]> =
+
+        },
+        phf.build()
+    )
+}
+
+fn quote_collider(collider: &Collider) -> TokenStream {
+    let kind = match &collider.kind {
+        ColliderKind::Circle(c) => {
+            let position = quote_vec(c.position);
+            let r = c.radius.to_raw();
+            quote! {
+                ColliderKind::Circle(Circle {
+                    position: #position,
+                    radius: Number::from_raw(#r),
+                })
+            }
+        }
+        ColliderKind::Line(line) => {
+            let start = quote_vec(line.start);
+            let end = quote_vec(line.end);
+            let normal = quote_vec(line.normal);
+
+            let length = line.length.to_raw();
+
+            quote! {ColliderKind::Line(Line {
+                start: #start,
+                end: #end,
+                normal: #normal,
+                length: Number::from_raw(#length),
+            })}
+        }
+        ColliderKind::Arc(s) => {
+            let center = quote_vec(s.circle.position);
+            let r = s.circle.radius.to_raw();
+            let circle = quote! {
+                Circle {
+                    position: #center,
+                    radius: Number::from_raw(#r),
+                }
+            };
+
+            let start_pos = quote_vec(s.start_pos);
+            let end_pos = quote_vec(s.end_pos);
+
+            quote! {
+                ColliderKind::Arc(Arc {
+                    circle: #circle,
+                    start_pos: #start_pos,
+                    end_pos: #end_pos,
+                })
+            }
+        }
+    };
+    let tag = match collider.tag {
+        util::ColliderTag::CollisionOnly => quote! {
+            ColliderTag::CollisionOnly
+        },
+        util::ColliderTag::CollisionGravitational => quote! {
+            ColliderTag::CollisionGravitational
+        },
+        util::ColliderTag::Killision => quote! {
+            ColliderTag::Killision
+        },
+    };
+    quote! {
+        Collider {
+            kind: #kind,
+            tag: #tag
+        }
+    }
+}
+
 pub fn assemble_colliders(map: &Map) -> String {
-    let colliders = extract_colliders(map);
+    let colliders: Vec<_> = extract_colliders(map)
+        .iter()
+        .filter(|&x| x.name.is_empty())
+        .cloned()
+        .flat_map(|x| x.colliders)
+        .collect();
     let spacial_colliders = spacial_colliders(&colliders);
     let boxed_up = get_3_and_first_gravity(&colliders, &spacial_colliders);
 
@@ -404,72 +608,7 @@ pub fn assemble_colliders(map: &Map) -> String {
         max_collider_box.0 .1 * BOX_SIZE
     );
 
-    let colliders_quote = colliders.iter().map(|x| {
-        let kind = match &x.kind {
-            ColliderKind::Circle(c) => {
-                let position = quote_vec(c.position);
-                let r = c.radius.to_raw();
-                quote! {
-                    ColliderKind::Circle(Circle {
-                        position: #position,
-                        radius: Number::from_raw(#r),
-                    })
-                }
-            }
-            ColliderKind::Line(line) => {
-                let start = quote_vec(line.start);
-                let end = quote_vec(line.end);
-                let normal = quote_vec(line.normal);
-
-                let length = line.length.to_raw();
-
-                quote! {ColliderKind::Line(Line {
-                    start: #start,
-                    end: #end,
-                    normal: #normal,
-                    length: Number::from_raw(#length),
-                })}
-            }
-            ColliderKind::Arc(s) => {
-                let center = quote_vec(s.circle.position);
-                let r = s.circle.radius.to_raw();
-                let circle = quote! {
-                    Circle {
-                        position: #center,
-                        radius: Number::from_raw(#r),
-                    }
-                };
-
-                let start_pos = quote_vec(s.start_pos);
-                let end_pos = quote_vec(s.end_pos);
-
-                quote! {
-                    ColliderKind::Arc(Arc {
-                        circle: #circle,
-                        start_pos: #start_pos,
-                        end_pos: #end_pos,
-                    })
-                }
-            }
-        };
-        let tag = match x.tag {
-            util::ColliderTag::CollisionOnly => quote! {
-                ColliderTag::CollisionOnly
-            },
-            util::ColliderTag::CollisionGravitational => quote! {
-                ColliderTag::CollisionGravitational
-            },
-            util::ColliderTag::Killision => quote! {
-                ColliderTag::Killision
-            },
-        };
-        quote! {
-            Collider {
-                kind: #kind,
-                tag: #tag
-            }
-        }
-    });
+    let colliders_quote = colliders.iter().map(quote_collider);
 
     let mut collider_phf = phf_codegen::Map::new();
 
@@ -487,7 +626,7 @@ pub fn assemble_colliders(map: &Map) -> String {
     let recovery_points = recovery_points.into_iter().map(quote_vec);
 
     format!(
-        "{}{};",
+        "{}{};\n\n{}",
         quote! {
             pub const BOX_SIZE: i32 = #BOX_SIZE;
 
@@ -500,6 +639,7 @@ pub fn assemble_colliders(map: &Map) -> String {
             pub static NEARBY_COLLIDERS: phf::Map<[i32; 2], &'static [&'static Collider]> =
         },
         collider_phf_code,
+        assemble_dynamic_colliders(map),
     )
 }
 
