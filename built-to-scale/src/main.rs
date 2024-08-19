@@ -19,7 +19,6 @@ use agb::{
 };
 use agb_tracker::Tracker;
 use alloc::boxed::Box;
-use map::START_POINT;
 use scenes::{Display, SceneManager, Update};
 
 extern crate alloc;
