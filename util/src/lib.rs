@@ -39,6 +39,17 @@ pub struct Collider {
 }
 
 impl Collider {
+    pub fn add_position(&mut self, position: Vector2D<Number>) {
+        match &mut self.kind {
+            ColliderKind::Circle(this) => this.position += position,
+            ColliderKind::Line(this) => {
+                this.start += position;
+                this.end += position
+            }
+            ColliderKind::Arc(this) => this.circle.position += position,
+        }
+    }
+
     pub fn collides_circle(&self, circle: &Circle) -> bool {
         match &self.kind {
             ColliderKind::Circle(this) => this.collides_circle(circle),

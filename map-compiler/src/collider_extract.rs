@@ -9,7 +9,7 @@ use proc_macro2::TokenStream;
 use tiled::{Map, Object, ObjectShape, PropertyValue};
 use util::{Arc, Circle, Collider, ColliderKind, ColliderTag, Line, Number};
 
-use quote::quote;
+use quote::{format_ident, quote};
 
 use crate::spiral::{perimeter, SpiralIterator};
 
@@ -446,6 +446,10 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
         .cloned()
         .collect();
 
+    let dynamic_object_images = dynamic_colliders
+        .iter()
+        .map(|x| quote::format_ident!("{}", x.name));
+
     let paths = extract_paths(map);
 
     // lookup what index the collider group is stored in
@@ -464,16 +468,29 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
 
         let points = path.points.iter().copied().map(quote_vec);
 
-        let colliders = collider_group.colliders.iter().map(quote_collider);
+        let colliders = collider_group
+            .colliders
+            .iter()
+            .map(|x| {
+                let mut corrected = x.clone();
+                corrected.add_position(path.points[0]);
+                corrected
+            })
+            .map(|x| quote_collider(&x));
+        let complete = path.complete;
+        let image = format_ident!("{}", collider_group.name);
+
         quote! {
-            (
-                &[
+            Path{
+                points: &[
+                    #(#points),*
+                ],
+                colliders:  &[
                     #(#colliders),*
                 ],
-                &[
-                    #(#points),*
-                ]
-            )
+                complete: #complete,
+                image: DynamicColliderImage::#image,
+            }
         }
     });
 
@@ -511,9 +528,13 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
         "{}{};\n\n",
         quote! {
 
-            pub static DYNAMIC_COLLIDER_GROUPS: &[(&[Collider], &[Vector2D<Number>])] = &[
+            pub static DYNAMIC_COLLIDER_GROUPS: &[Path] = &[
                 #(#dynamic_collider_groups),*
             ];
+
+            pub enum DynamicColliderImage {
+                #(#dynamic_object_images),*
+            }
 
             pub static PATH_LOOKUP: phf::Map<[i32; 2], &'static [usize]> =
 

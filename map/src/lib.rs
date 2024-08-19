@@ -11,7 +11,14 @@ mod map {
     include!(concat!(env!("OUT_DIR"), "/map.rs"));
 }
 
-pub use map::{CAMERA_START, START_POINT};
+pub struct Path {
+    pub points: &'static [Vector2D<Number>],
+    pub colliders: &'static [Collider],
+    pub complete: bool,
+    pub image: DynamicColliderImage,
+}
+
+pub use map::{DynamicColliderImage, CAMERA_START, START_POINT};
 
 pub fn get_recovery_point(position: Vector2D<Number>) -> Vector2D<Number> {
     map::RECOVERY_POINTS
