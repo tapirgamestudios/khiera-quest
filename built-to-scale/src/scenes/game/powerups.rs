@@ -57,7 +57,7 @@ impl PowerUpObject {
     }
 
     pub fn display(&self, camera_location: Vector2D<Number>, display: &mut Display) {
-        if (self.location - camera_location).magnitude_squared() > (WIDTH * WIDTH / 4).into() {
+        if (self.location - camera_location).magnitude_squared() > (WIDTH * WIDTH / 3).into() {
             return; // don't need to render
         }
 
