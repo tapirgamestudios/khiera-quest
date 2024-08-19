@@ -98,7 +98,12 @@ impl Player {
         if self.jump_state == JumpState::HasJump {
             let normal = self.get_normal();
 
+            let dot = self.speed.dot(normal);
+            if dot < 0.into() {
+                self.speed -= normal * dot;
+            }
             self.speed += normal * num!(2.2);
+
             self.position += self.speed;
 
             self.jump_state = JumpState::Jumping;
