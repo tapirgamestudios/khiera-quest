@@ -30,10 +30,10 @@ where
             let position = circle.position.floor();
             let radius = circle.radius.floor();
 
-            let min_box_x = (position.x - radius) / BOX_SIZE;
-            let max_box_x = (position.x + radius + BOX_SIZE - 1) / BOX_SIZE;
+            let min_box_x = (position.x - radius).div_floor(BOX_SIZE);
+            let max_box_x = (position.x + radius + BOX_SIZE - 1).div_floor(BOX_SIZE);
             let min_box_y = (position.y - radius) / BOX_SIZE;
-            let max_box_y = (position.y + radius + BOX_SIZE - 1) / BOX_SIZE;
+            let max_box_y = (position.y + radius + BOX_SIZE - 1).div_floor(BOX_SIZE);
 
             let in_circle = |x: i32, y: i32| {
                 (position - (x, y).into()).magnitude_squared() <= (radius + 8) * (radius + 8)
@@ -58,7 +58,10 @@ where
                 (start.x as isize, start.y as isize),
                 (end.x as isize, end.y as isize),
             ) {
-                let this_box = (x as i32 / BOX_SIZE, y as i32 / BOX_SIZE);
+                let this_box = (
+                    (x as i32).div_floor(BOX_SIZE),
+                    (y as i32).div_floor(BOX_SIZE),
+                );
                 if current_box != this_box {
                     f(this_box.0, this_box.1);
                     current_box = this_box;

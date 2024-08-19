@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(int_roundings)]
 use agb_fixnum::Vector2D;
 use util::{Collider, Number, ScrollStop};
 
@@ -20,8 +21,8 @@ pub fn get_recovery_point(position: Vector2D<Number>) -> Vector2D<Number> {
 }
 
 pub fn get_nearby(x: i32, y: i32) -> &'static [&'static Collider] {
-    let x = x / map::BOX_SIZE;
-    let y = y / map::BOX_SIZE;
+    let x = x.div_floor(map::BOX_SIZE);
+    let y = y.div_floor(map::BOX_SIZE);
 
     map::NEARBY_COLLIDERS
         .get(&[x, y])
