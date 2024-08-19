@@ -273,7 +273,9 @@ impl Game {
         self.player.handle_jump_input()
     }
 
-    fn handle_player_death(&mut self) {
+    fn handle_player_death(&mut self, update: &mut Update) {
+        update.play_sfx(resources::RECOVERY_SOUND);
+
         let point_to_recover_to = map::get_recovery_point(self.player.position);
         self.player_state = PlayerState::Recovering(RecoveringState {
             recover_to: point_to_recover_to,
@@ -296,7 +298,11 @@ impl Game {
     }
 
     /// returns the cosine of the smallest angle of collision if there is one. So None = not touching the ground
-    fn handle_collider_collisions(&mut self, colliders: &[&Collider]) -> Option<Number> {
+    fn handle_collider_collisions(
+        &mut self,
+        colliders: &[&Collider],
+        update: &mut Update,
+    ) -> Option<Number> {
         let mut max_angle = None;
 
         for collider in colliders {
@@ -306,7 +312,7 @@ impl Game {
             };
             if collider.collides_circle(&player_circle) {
                 if collider.tag.is_kills_player() {
-                    self.handle_player_death();
+                    self.handle_player_death(update);
                 } else if collider.tag.is_collision() {
                     let normal = collider.normal_circle(&player_circle);
 
@@ -364,7 +370,7 @@ impl Game {
 
         self.player.speed += gravity;
 
-        self.player.ground_state = match self.handle_collider_collisions(colliders) {
+        self.player.ground_state = match self.handle_collider_collisions(colliders, update) {
             Some(value) => {
                 if value > num!(0.8) {
                     // approximately < 45 degree angle. So definitely on the ground
