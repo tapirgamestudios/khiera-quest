@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="8" nextobjectid="179">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="8" tileheight="8" infinite="1" nextlayerid="10" nextobjectid="184">
  <tileset firstgid="1" source="planets.tsx"/>
  <tileset firstgid="1025" source="platforms.tsx"/>
  <tileset firstgid="2049" source="planets2.tsx"/>
+ <tileset firstgid="3073" source="collideable-objects.tsx"/>
  <layer id="5" name="Platforms" width="30" height="20">
   <data encoding="csv">
    <chunk x="32" y="-128" width="16" height="16">
@@ -62,11 +63,11 @@
    <chunk x="112" y="-112" width="16" height="16">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,1149,1150,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,1149,1150,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -1847,6 +1848,28 @@
 </chunk>
   </data>
  </layer>
+ <layer id="8" name="Dummy Collideables" width="30" height="20">
+  <data encoding="csv">
+   <chunk x="-16" y="-96" width="16" height="16">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+3073,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</chunk>
+  </data>
+ </layer>
  <objectgroup color="#ff0000" id="2" name="Colliders">
   <object id="91" x="-71.5" y="224.75">
    <polyline points="-160.5,-80.75 839.5,-80.75"/>
@@ -1895,6 +1918,17 @@
   </object>
   <object id="178" x="-24.75" y="-678.25">
    <polygon points="0.636364,-1.18182 40,51 38.75,71.5 25.5,87 5.375,98.625 -24.625,101.063 -43.375,83.9375 -60,56.25 -59.5,32.75 -43.5,12.5 -15.25,-2.25"/>
+  </object>
+  <object id="182" name="SLIME_MOON" type="MOVING" x="-126.125" y="-679.25">
+   <properties>
+    <property name="Path" value="slime_moon1"/>
+   </properties>
+   <polygon points="0,0 1.8125,-14.625 7.8125,-20.625 22.4375,-20.75 28.375,-13.75 26.25,-0.125 19.4375,6.4375 4.9375,5.3125"/>
+  </object>
+ </objectgroup>
+ <objectgroup id="9" name="Paths">
+  <object id="183" name="slime_moon1" x="-111.818" y="-687.636">
+   <polygon points="-3.6875,-5 36.3636,-32.9091 119.091,-46 167.091,-8.72727 185.455,73.0909 176.364,123.636 101.818,160.727 29.6364,166.364 -17.8182,107.455 -21.8182,41.0909"/>
   </object>
  </objectgroup>
  <objectgroup color="#613583" id="7" name="Killision">
@@ -2032,12 +2066,18 @@
   <object id="177" x="139.989" y="-617.886">
    <polyline points="0,0 0,-21.0909"/>
   </object>
+  <object id="180" x="961.818" y="-845.273">
+   <polyline points="0,0 13.4545,3.81818"/>
+  </object>
+  <object id="181" x="969.273" y="-878.182">
+   <polyline points="0,0 13.4545,4.36364"/>
+  </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" name="PLAYER" x="-184.167" y="-46.8333">
+  <object id="47" name="PLAYER" x="1027.83" y="-586.833">
    <point/>
   </object>
-  <object id="86" name="CAMERA" x="-101" y="42.3333">
+  <object id="86" name="CAMERA" x="1068.33" y="-575">
    <point/>
   </object>
  </objectgroup>
