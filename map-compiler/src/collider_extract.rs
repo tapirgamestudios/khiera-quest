@@ -467,7 +467,7 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
 
     let dynamic_object_images = dynamic_colliders
         .iter()
-        .map(|x| quote::format_ident!("{}", x.name));
+        .map(|x| quote::format_ident!("{}", x.name)).dedup();
 
     let paths = extract_paths(map);
 
