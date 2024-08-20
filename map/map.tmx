@@ -2040,6 +2040,9 @@
    <polygon points="0.579545,0.221591 36.3636,-32.9091 119.091,-46 167.091,-8.72727 185.455,73.0909 176.364,123.636 101.818,160.727 29.6364,166.364 -17.8182,107.455 -21.8182,41.0909"/>
   </object>
   <object id="211" name="red planet platform" x="1183.64" y="-664.545">
+   <properties>
+    <property name="speed" type="float" value="1"/>
+   </properties>
    <polygon points="0,0 -46.7614,24.2955 71.0909,-36.9091"/>
   </object>
  </objectgroup>
