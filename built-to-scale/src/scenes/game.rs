@@ -736,9 +736,9 @@ impl Terrain {
                 let next_position = from * (-loaded.path_index_timer + 1).change_base()
                     + to * loaded.path_index_timer.change_base();
                 let velocity = next_position - loaded.current_position;
+                loaded.current_position += velocity;
                 for collider in loaded.colliders.iter_mut() {
                     collider.apply_velocity(velocity);
-                    loaded.current_position += velocity;
                 }
             }
         }
