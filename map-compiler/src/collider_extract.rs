@@ -22,7 +22,7 @@ const BOX_DISTANCE_FROM_INNER: usize = 4;
 
 const PLAYER_CIRCLE_APPROX_RADIUS: i32 = 8;
 
-const PATH_BOX_SIZE: i32 = 1024;
+const PATH_BOX_SIZE: i32 = 256;
 
 fn occupied_boxes<F>(collider: &Collider, mut f: F)
 where
@@ -548,10 +548,12 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
             .collect();
 
         for (x, y) in boxes_path_goes_through {
-            boxes_path_crosses_idx
-                .entry((x, y))
-                .or_default()
-                .push(collider_group_idx);
+            for (x, y) in SpiralIterator::new((x, y)).take(9) {
+                boxes_path_crosses_idx
+                    .entry((x, y))
+                    .or_default()
+                    .push(collider_group_idx);
+            }
         }
     }
 
