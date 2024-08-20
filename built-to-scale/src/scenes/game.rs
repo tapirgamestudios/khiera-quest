@@ -715,9 +715,11 @@ impl Terrain {
                 < (WIDTH * WIDTH / 3).into()
             {
                 let image = convert_sprite(collider.path.image);
+                let image_size = image.size().to_width_height();
+                let image_size = Vector2D::new(image_size.0 as i32, image_size.1 as i32);
                 display.display_regular(
                     image,
-                    collider.current_position - camera_position - (13, 12).into(),
+                    collider.current_position - camera_position - image_size.change_base() / 2,
                 );
             }
         }
