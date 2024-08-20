@@ -49,6 +49,9 @@ extract_statics!(
         DASH,
         SLIME_MOON,
         PLATFORM_UP_RIGHT,
+        PLATFORM_VERTICAL,
+        ROUND_PLATFORM,
+        SQUARE_PLATFORM,
     ]
 );
 
