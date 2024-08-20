@@ -830,28 +830,23 @@ impl MissionLogPlayer {
                 self.playing_mission_log = None;
             }
         } else {
-            let active = MISSION_LOGS
-                .iter()
-                .enumerate()
-                .find(|(_, x)| (x.point - floored).magnitude_squared() < 64 * 64);
+            let active = MISSION_LOGS.iter().enumerate().find(|(idx, x)| {
+                self.encountered_mission_logs & (1 << idx) == 0
+                    && (x.point - floored).magnitude_squared() < 64 * 64
+            });
             if let Some((idx, log)) = active {
-                if self.encountered_mission_logs & (1 << idx) == 0 {
-                    // not yet encountered
+                // mark as encountered
+                self.encountered_mission_logs |= 1 << idx;
 
-                    // mark as encountered
-                    self.encountered_mission_logs |= 1 << idx;
+                self.currently_playing_mission_log_timer = 0;
 
-                    self.currently_playing_mission_log_timer = 0;
+                let mut render = ObjectTextRender::new(&FONT, Size::S32x32, self.palette.clone());
 
-                    let mut render =
-                        ObjectTextRender::new(&FONT, Size::S32x32, self.palette.clone());
+                let _ = render.write_str(log.text);
+                let _ = render.write_char('\n');
 
-                    let _ = render.write_str(log.text);
-                    let _ = render.write_char('\n');
-
-                    render.layout((WIDTH / 2, HEIGHT), TextAlignment::Left, 3);
-                    self.playing_mission_log = Some(render);
-                }
+                render.layout((WIDTH / 2, HEIGHT), TextAlignment::Left, 3);
+                self.playing_mission_log = Some(render);
             }
         }
     }
