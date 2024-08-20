@@ -478,12 +478,11 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
         .map(|(idx, x)| (x.class.as_str(), idx))
         .collect();
 
-    let dynamic_collider_groups = paths.iter().map(|path| {
-        let collider_group_idx = collider_group_indexes
-            .get(path.name.as_str())
-            .copied()
-            .expect("Find object group for path");
-        let collider_group = &dynamic_colliders[collider_group_idx];
+    let dynamic_collider_groups = dynamic_colliders.iter().map(|collider_group| {
+        let path = paths
+            .iter()
+            .find(|x| x.name == collider_group.class)
+            .expect("Should be a path for an object");
 
         let path_points = path
             .points
