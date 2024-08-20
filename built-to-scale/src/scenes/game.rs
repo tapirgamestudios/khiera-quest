@@ -632,7 +632,11 @@ impl<'a> DynamicAndStaticColliders<'a> {
     }
 
     fn is_empty(&self) -> bool {
-        self.static_colliders.is_empty() && self.dynamic_colliders.is_empty()
+        self.static_colliders.is_empty()
+            && !self
+                .dynamic_colliders
+                .iter()
+                .any(|x| x.colliders[0].tag.is_gravitational())
     }
 }
 
