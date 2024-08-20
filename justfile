@@ -1,6 +1,6 @@
 GAME_CRATE_NAME := "built-to-scale"
-ROM_TITLE := "built-to-scale"
-ITCH_PROJECT := "setsquare/built-to-scale"
+ROM_TITLE := "khieras-quest"
+ITCH_PROJECT := "setsquare/khieras-quest"
 
 export CARGO_TARGET_DIR := justfile_directory() + "/target"
 
