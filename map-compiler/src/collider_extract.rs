@@ -139,6 +139,7 @@ fn extract_from_layer<'a>(
                         radius: Number::from_f32(*width / 2.),
                     }),
                     tag,
+                    velocity: Vector2D::new(0.into(), 0.into()),
                 });
             }
             tiled::ObjectShape::Polygon { points } | tiled::ObjectShape::Polyline { points } => {
@@ -608,10 +609,14 @@ fn quote_collider(collider: &Collider) -> TokenStream {
             ColliderTag::Killision
         },
     };
+
+    let velocity = quote_vec(collider.velocity);
+
     quote! {
         Collider {
             kind: #kind,
-            tag: #tag
+            tag: #tag,
+            velocity: #velocity,
         }
     }
 }
@@ -706,6 +711,7 @@ fn rounded_line_collider(
                 position: to_vec(circle_center),
                 radius: Number::from_f32(radius),
             }),
+            velocity: Vector2D::new(0.into(), 0.into()),
             tag,
         });
     } else {
@@ -719,6 +725,7 @@ fn rounded_line_collider(
                 end_pos: to_vec((p2 - c).normalize()),
             }),
             tag,
+            velocity: Vector2D::new(0.into(), 0.into()),
         })
     }
 
@@ -750,6 +757,7 @@ fn get_line_colliders(start: Vector2<f32>, end: Vector2<f32>, tag: ColliderTag) 
                 normal: to_vec(normal),
                 length: Number::from_f32(segment_length),
             }),
+            velocity: Vector2D::new(0.into(), 0.into()),
             tag,
         });
 

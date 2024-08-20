@@ -333,7 +333,7 @@ impl GamePart {
 
                     let overshoot = collider.overshoot(&player_circle);
 
-                    self.player.position += overshoot;
+                    self.player.position += overshoot + collider.velocity * 2;
                 }
             }
         }
@@ -639,7 +639,6 @@ struct DynamicCollider {
     current_path_element_idx: usize,
     current_position: Vector2D<Number>,
     colliders: Vec<Collider>,
-    current_velocity: Vector2D<Number>,
 }
 
 struct Terrain {
@@ -682,7 +681,6 @@ impl Terrain {
                 current_path_element_idx: 1,
                 colliders,
                 current_position: to_be_loaded.points[0],
-                current_velocity: Vector2D::new(0.into(), 0.into()),
             });
         }
     }
@@ -690,14 +688,13 @@ impl Terrain {
     fn update_paths(&mut self) {
         for loaded in self.loaded_dynamic_colliders.iter_mut() {
             let point_to_approach = loaded.path.points[loaded.current_path_element_idx];
-            let normalised = (point_to_approach - loaded.current_position).normalise() / 8;
+            let normalised = (point_to_approach - loaded.current_position).normalise() / 2;
 
             for collider in loaded.colliders.iter_mut() {
-                collider.add_position(normalised);
+                collider.apply_velocity(normalised);
             }
 
-            loaded.current_velocity = normalised;
-            loaded.current_position += loaded.current_velocity;
+            loaded.current_position += normalised;
 
             if (loaded.current_position - point_to_approach).magnitude_squared() < 5.into() {
                 loaded.current_path_element_idx += 1;

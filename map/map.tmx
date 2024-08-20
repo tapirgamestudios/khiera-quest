@@ -2131,10 +2131,10 @@
   </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" name="PLAYER" x="1107.86" y="-533.319">
+  <object id="47" name="PLAYER" x="-14.14" y="-535.319">
    <point/>
   </object>
-  <object id="86" name="CAMERA" x="1148.36" y="-521.485">
+  <object id="86" name="CAMERA" x="26.36" y="-523.485">
    <point/>
   </object>
  </objectgroup>

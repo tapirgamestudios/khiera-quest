@@ -36,18 +36,21 @@ impl ColliderTag {
 pub struct Collider {
     pub kind: ColliderKind,
     pub tag: ColliderTag,
+    pub velocity: Vector2D<Number>,
 }
 
 impl Collider {
-    pub fn add_position(&mut self, position: Vector2D<Number>) {
+    pub fn apply_velocity(&mut self, velocity: Vector2D<Number>) {
         match &mut self.kind {
-            ColliderKind::Circle(this) => this.position += position,
+            ColliderKind::Circle(this) => this.position += velocity,
             ColliderKind::Line(this) => {
-                this.start += position;
-                this.end += position
+                this.start += velocity;
+                this.end += velocity
             }
-            ColliderKind::Arc(this) => this.circle.position += position,
+            ColliderKind::Arc(this) => this.circle.position += velocity,
         }
+
+        self.velocity = velocity;
     }
 
     pub fn collides_circle(&self, circle: &Circle) -> bool {
