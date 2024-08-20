@@ -625,8 +625,8 @@ impl Scene for Game {
     }
 
     fn display(&mut self, display: &mut super::Display) {
-        self.game.display(display);
         self.mission_log.display(display);
+        self.game.display(display);
         self.terrain.display(display, self.game.camera.position);
     }
 }
