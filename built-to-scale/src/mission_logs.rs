@@ -35,7 +35,7 @@ pub static MISSION_LOGS: &[MissionLog] = &[
     },
     MissionLog {
         point: Vector2D::new(-66, -1776),
-        text: "TELEPORTATION SUCCESSFUL. SLIME PLANET IS NOW NO LONGER A THREAT.\n\n
+        text: "TELEPORTATION SUCCESSFULL. SLIME PLANET IS NOW NO LONGER A THREAT.\n\n\
             Uhhh... I think I'm stuck here now."
     },
     MissionLog {
