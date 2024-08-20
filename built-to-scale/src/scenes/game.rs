@@ -639,6 +639,7 @@ struct DynamicCollider {
     current_path_element_idx: usize,
     current_position: Vector2D<Number>,
     colliders: Vec<Collider>,
+    current_velocity: Vector2D<Number>,
 }
 
 struct Terrain {
@@ -681,6 +682,7 @@ impl Terrain {
                 current_path_element_idx: 1,
                 colliders,
                 current_position: to_be_loaded.points[0],
+                current_velocity: Vector2D::new(0.into(), 0.into()),
             });
         }
     }
@@ -694,7 +696,8 @@ impl Terrain {
                 collider.add_position(normalised);
             }
 
-            loaded.current_position += normalised;
+            loaded.current_velocity = normalised;
+            loaded.current_position += loaded.current_velocity;
 
             if (loaded.current_position - point_to_approach).magnitude_squared() < 5.into() {
                 loaded.current_path_element_idx += 1;
