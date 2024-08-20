@@ -704,7 +704,7 @@ impl Terrain {
                 }
                 PathDirection::Backwards => {
                     let from = &loaded.path.points[loaded.current_path_element_idx];
-                    let to = &loaded.path.points[(loaded.current_path_element_idx as isize)
+                    let to = &loaded.path.points[(loaded.current_path_element_idx as isize - 1)
                         .rem_euclid(loaded.path.points.len() as isize)
                         as usize];
                     (from.point, to.point, to.incrementer)
@@ -717,12 +717,12 @@ impl Terrain {
                 match loaded.direction {
                     PathDirection::Forwards => {
                         loaded.current_path_element_idx += 1;
-                        if loaded.current_path_element_idx == loaded.path.points.len() {
-                            if !loaded.path.complete {
+                        if loaded.path.complete {
+                            if loaded.current_path_element_idx == loaded.path.points.len() - 1 {
                                 loaded.direction = PathDirection::Backwards;
-                            } else {
-                                loaded.current_path_element_idx = 0;
                             }
+                        } else if loaded.current_path_element_idx == loaded.path.points.len() {
+                            loaded.current_path_element_idx = 0;
                         }
                     }
                     PathDirection::Backwards => {
