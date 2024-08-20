@@ -729,5 +729,6 @@ impl Terrain {
 fn convert_sprite(sprite: map::DynamicColliderImage) -> &'static Sprite {
     match sprite {
         map::DynamicColliderImage::SLIME_MOON => resources::SLIME_MOON.sprite(0),
+        map::DynamicColliderImage::PLATFORM_UP_RIGHT => resources::PLATFORM_UP_RIGHT.sprite(0),
     }
 }

@@ -48,6 +48,7 @@ extract_statics!(
         DOUBLE_JUMP,
         DASH,
         SLIME_MOON,
+        PLATFORM_UP_RIGHT,
     ]
 );
 
