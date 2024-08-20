@@ -3032,11 +3032,8 @@
   <object id="285" x="24" y="-1768">
    <polygon points="0,3.5 104,3.375 104,8 88,24 32,24 0,8"/>
   </object>
-  <object id="292" x="-304" y="-1616">
-   <polyline points="0,0 168,0"/>
-  </object>
-  <object id="293" x="40" y="-1616">
-   <polyline points="0,0 160,0"/>
+  <object id="292" x="-296" y="-1608">
+   <polyline points="0,0 496,0"/>
   </object>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
