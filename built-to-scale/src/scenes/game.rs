@@ -717,7 +717,7 @@ impl Terrain {
                 match loaded.direction {
                     PathDirection::Forwards => {
                         loaded.current_path_element_idx += 1;
-                        if loaded.path.complete {
+                        if !loaded.path.complete {
                             if loaded.current_path_element_idx == loaded.path.points.len() - 1 {
                                 loaded.direction = PathDirection::Backwards;
                             }
