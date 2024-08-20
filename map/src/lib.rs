@@ -1,18 +1,23 @@
 #![no_std]
 #![feature(int_roundings)]
-use agb_fixnum::Vector2D;
+use agb_fixnum::{Num, Vector2D};
 use util::{Collider, Number, ScrollStop};
 
 mod map {
     use super::*;
-    use agb_fixnum::Vector2D;
+    use agb_fixnum::{Num, Vector2D};
     use util::*;
 
     include!(concat!(env!("OUT_DIR"), "/map.rs"));
 }
 
+pub struct PathPoint {
+    pub point: Vector2D<Number>,
+    pub incrementer: Num<i32, 24>,
+}
+
 pub struct Path {
-    pub points: &'static [Vector2D<Number>],
+    pub points: &'static [PathPoint],
     pub colliders: &'static [Collider],
     pub complete: bool,
     pub image: DynamicColliderImage,

@@ -2,7 +2,7 @@ mod powerups;
 
 use agb::{
     display::{affine::AffineMatrix, object::Sprite, HEIGHT, WIDTH},
-    fixnum::{num, Rect, Vector2D},
+    fixnum::{num, Num, Rect, Vector2D},
 };
 
 use alloc::vec::Vec;
@@ -638,6 +638,13 @@ struct DynamicCollider {
     current_path_element_idx: usize,
     current_position: Vector2D<Number>,
     colliders: Vec<Collider>,
+    direction: PathDirection,
+    path_index_timer: Num<i32, 24>,
+}
+
+enum PathDirection {
+    Forwards,
+    Backwards,
 }
 
 struct Terrain {
@@ -677,28 +684,61 @@ impl Terrain {
             let colliders = to_be_loaded.colliders.to_vec();
             self.loaded_dynamic_colliders.push(DynamicCollider {
                 path: to_be_loaded,
-                current_path_element_idx: 1,
+                current_path_element_idx: 0,
                 colliders,
-                current_position: to_be_loaded.points[0],
+                current_position: to_be_loaded.points[0].point,
+                path_index_timer: 0.into(),
+                direction: PathDirection::Forwards,
             });
         }
     }
 
     fn update_paths(&mut self) {
         for loaded in self.loaded_dynamic_colliders.iter_mut() {
-            let point_to_approach = loaded.path.points[loaded.current_path_element_idx];
-            let normalised = (point_to_approach - loaded.current_position).normalise() / 2;
+            let (from, to, frames) = match loaded.direction {
+                PathDirection::Forwards => {
+                    let from = &loaded.path.points[loaded.current_path_element_idx];
+                    let to = &loaded.path.points
+                        [(loaded.current_path_element_idx + 1) % loaded.path.points.len()];
+                    (from.point, to.point, from.incrementer)
+                }
+                PathDirection::Backwards => {
+                    let from = &loaded.path.points[loaded.current_path_element_idx];
+                    let to = &loaded.path.points[(loaded.current_path_element_idx as isize)
+                        .rem_euclid(loaded.path.points.len() as isize)
+                        as usize];
+                    (from.point, to.point, to.incrementer)
+                }
+            };
 
-            for collider in loaded.colliders.iter_mut() {
-                collider.apply_velocity(normalised);
-            }
-
-            loaded.current_position += normalised;
-
-            if (loaded.current_position - point_to_approach).magnitude_squared() < 5.into() {
-                loaded.current_path_element_idx += 1;
-                if loaded.current_path_element_idx >= loaded.path.points.len() {
-                    loaded.current_path_element_idx = 0;
+            loaded.path_index_timer += frames;
+            if loaded.path_index_timer >= 1.into() {
+                loaded.path_index_timer -= 1;
+                match loaded.direction {
+                    PathDirection::Forwards => {
+                        loaded.current_path_element_idx += 1;
+                        if loaded.current_path_element_idx == loaded.path.points.len() {
+                            if !loaded.path.complete {
+                                loaded.direction = PathDirection::Backwards;
+                            } else {
+                                loaded.current_path_element_idx = 0;
+                            }
+                        }
+                    }
+                    PathDirection::Backwards => {
+                        loaded.current_path_element_idx -= 1;
+                        if loaded.current_path_element_idx == 0 {
+                            loaded.direction = PathDirection::Forwards;
+                        }
+                    }
+                }
+            } else {
+                let next_position = from * (-loaded.path_index_timer + 1).change_base()
+                    + to * loaded.path_index_timer.change_base();
+                let velocity = next_position - loaded.current_position;
+                for collider in loaded.colliders.iter_mut() {
+                    collider.apply_velocity(velocity);
+                    loaded.current_position += velocity;
                 }
             }
         }

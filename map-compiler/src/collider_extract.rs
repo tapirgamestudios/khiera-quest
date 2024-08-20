@@ -3,7 +3,8 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use agb_fixnum::Vector2D;
+use agb_fixnum::{Num, Vector2D};
+use itertools::Itertools;
 use nalgebra::{Vector2, Vector3};
 use proc_macro2::TokenStream;
 use tiled::{Map, Object, ObjectShape, PropertyValue};
@@ -407,6 +408,7 @@ struct Path {
     name: String,
     points: Vec<Vector2D<Number>>,
     complete: bool,
+    speed: f64,
 }
 
 fn extract_paths(map: &Map) -> Vec<Path> {
@@ -427,6 +429,15 @@ fn extract_paths(map: &Map) -> Vec<Path> {
                 _ => panic!("Path should be polyline or polygon"),
             };
 
+            let speed = object
+                .properties
+                .get("speed")
+                .map(|x| match x {
+                    PropertyValue::FloatValue(x) => *x as f64,
+                    _ => panic!("Speed should be a float"),
+                })
+                .expect("Moving path should specify a speed");
+
             Path {
                 name: object.name.clone(),
                 points: points
@@ -441,6 +452,7 @@ fn extract_paths(map: &Map) -> Vec<Path> {
                     })
                     .collect(),
                 complete: is_complete,
+                speed,
             }
         })
         .collect()
@@ -473,7 +485,31 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
             .expect("Find object group for path");
         let collider_group = &dynamic_colliders[collider_group_idx];
 
-        let points = path.points.iter().copied().map(quote_vec);
+        let path_points = path
+            .points
+            .iter()
+            .copied()
+            .chain(core::iter::once(path.points[0]))
+            .tuple_windows()
+            .map(|(a, b)| {
+                let length = (b - a).magnitude();
+                let length = length.to_raw() as f64 / (1 << 8) as f64;
+                let time = path.speed * 1. / length;
+                let time_fixed = Num::<i32, 24>::from_f64(time);
+
+                (a, time_fixed)
+            });
+        let points = path_points.map(|(point, frames)| {
+            let point = quote_vec(point);
+            let incrementer = frames.to_raw();
+
+            quote! {
+                PathPoint {
+                    point: #point,
+                    incrementer: Num::from_raw(#incrementer),
+                }
+            }
+        });
 
         let colliders = collider_group.colliders.iter().map(quote_collider);
         let complete = path.complete;

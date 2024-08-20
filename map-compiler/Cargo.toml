@@ -12,3 +12,4 @@ proc-macro2 = "1"
 phf_codegen = "0.11.1"
 nalgebra = "0.33.0"
 agb_fixnum = { path = "../../agb/agb-fixnum" }
+itertools = "0.13.0"
