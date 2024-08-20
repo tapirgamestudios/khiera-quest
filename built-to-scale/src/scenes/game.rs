@@ -333,7 +333,7 @@ impl GamePart {
 
                     let overshoot = collider.overshoot(&player_circle);
 
-                    self.player.position += overshoot + collider.velocity * 2;
+                    self.player.position += overshoot + collider.velocity;
                 }
             }
         }
@@ -373,6 +373,7 @@ impl GamePart {
         let was_on_ground = self.player.is_on_ground();
 
         self.player.speed += gravity;
+        self.player.position += self.player.speed;
 
         self.player.ground_state = match self.handle_collider_collisions(update, colliders, terrain)
         {
@@ -418,8 +419,6 @@ impl GamePart {
         }
 
         self.player.update_facing(-gravity_direction);
-
-        self.player.position += self.player.speed;
     }
 
     fn update_camera(&mut self) {
