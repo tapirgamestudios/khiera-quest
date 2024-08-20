@@ -428,8 +428,7 @@ impl GamePart {
         let camera_rect = Rect::new(self.camera.position - camera_size / 2, camera_size);
 
         let camera_destination = if !camera_rect.contains_point(target_position) {
-            self.camera.position
-                + (target_position - self.camera.position).fast_normalise() * num!(1.25)
+            self.camera.position + (target_position - self.camera.position) / 60
         } else {
             self.camera.position
         };

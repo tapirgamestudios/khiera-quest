@@ -2318,10 +2318,10 @@
   <object id="236" x="1455.82" y="-903.091" width="16.1818" height="15.0909"/>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" name="PLAYER" x="564.86" y="45.181">
+  <object id="47" name="PLAYER" x="-161" y="-80.834">
    <point/>
   </object>
-  <object id="86" name="CAMERA" x="580.86" y="43.515">
+  <object id="86" name="CAMERA" x="-133.5" y="48.5">
    <point/>
   </object>
  </objectgroup>
