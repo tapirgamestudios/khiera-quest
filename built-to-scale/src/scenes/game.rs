@@ -303,7 +303,6 @@ impl GamePart {
     /// returns the cosine of the smallest angle of collision if there is one. So None = not touching the ground
     fn handle_collider_collisions(
         &mut self,
-
         update: &mut Update,
         colliders: DynamicAndStaticColliders,
         terrain: &Terrain,
