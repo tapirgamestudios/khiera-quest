@@ -435,7 +435,12 @@ impl GamePart {
         let camera_rect = Rect::new(self.camera.position - camera_size / 2, camera_size);
 
         let camera_destination = if !camera_rect.contains_point(target_position) {
-            self.camera.position + (target_position - self.camera.position) / 60
+            let mut offset = (target_position - self.camera.position) / 60;
+            if offset.magnitude_squared() > (6 * 6).into() {
+                offset = offset.normalise() * 6;
+            }
+
+            self.camera.position + offset
         } else {
             self.camera.position
         };
