@@ -2318,21 +2318,15 @@
   <object id="236" x="1455.82" y="-903.091" width="16.1818" height="15.0909"/>
  </objectgroup>
  <objectgroup color="#00ff00" id="6" name="Start">
-  <object id="47" name="PLAYER" x="1242.86" y="-716.819">
+  <object id="47" name="PLAYER" x="564.86" y="45.181">
    <point/>
   </object>
-  <object id="86" name="CAMERA" x="1258.86" y="-718.485">
+  <object id="86" name="CAMERA" x="580.86" y="43.515">
    <point/>
   </object>
  </objectgroup>
  <objectgroup color="#1c71d8" id="10" name="Items">
   <object id="186" name="Jump Boost" x="-94.2083" y="-611">
-   <point/>
-  </object>
-  <object id="190" name="Double Jump" x="1155.63" y="-629.875">
-   <point/>
-  </object>
-  <object id="191" name="Double Jump" x="1142.13" y="-665.313">
    <point/>
   </object>
   <object id="219" name="Dash" x="1436" y="-948.333">

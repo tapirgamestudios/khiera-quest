@@ -16,6 +16,7 @@ pub struct Update<'a, 'b> {
     button: &'a ButtonController,
     new_pos: Option<Vector2D<i32>>,
     mixer: &'a mut Mixer<'b>,
+    play_space_music: bool,
 }
 
 impl<'a, 'b> Update<'a, 'b> {
@@ -24,6 +25,7 @@ impl<'a, 'b> Update<'a, 'b> {
             button,
             new_pos: None,
             mixer,
+            play_space_music: false,
         }
     }
 
@@ -33,6 +35,14 @@ impl<'a, 'b> Update<'a, 'b> {
 
     pub fn new_pos(&self) -> Option<Vector2D<i32>> {
         self.new_pos
+    }
+
+    pub fn play_space_music(&mut self) {
+        self.play_space_music = true;
+    }
+
+    pub fn should_play_space_music(&self) -> bool {
+        self.play_space_music
     }
 }
 

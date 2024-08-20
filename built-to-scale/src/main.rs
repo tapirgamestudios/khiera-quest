@@ -15,10 +15,10 @@ use agb::{
     fixnum::Vector2D,
     input::ButtonController,
     interrupt::VBlank,
-    sound::mixer::Frequency,
+    sound::mixer::{Frequency, SoundChannel},
 };
 use agb_tracker::Tracker;
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec::Vec};
 use scenes::{Display, SceneManager, Update};
 
 extern crate alloc;
@@ -99,7 +99,8 @@ fn entry(mut gba: agb::Gba) -> ! {
 
     let mut mixer = gba.mixer.mixer(Frequency::Hz32768);
     mixer.enable();
-    let mut tracker = Tracker::new(&sfx::BG_MUSIC);
+    let mut tracker = Tracker::new(&sfx::GROUND_MUSIC);
+    let mut is_playing_space_music = false;
 
     loop {
         button_controller.update();
@@ -123,6 +124,13 @@ fn entry(mut gba: agb::Gba) -> ! {
                     star_pos.y.rem_euclid(32 * 8) as i16,
                 ));
             }
+
+            if update.should_play_space_music() && !is_playing_space_music {
+                silence_mixer(&mut mixer);
+
+                tracker = Tracker::new(&sfx::SPACE_MUSIC);
+                is_playing_space_music = true;
+            }
         }
         vblank.wait_for_vblank();
         scene.display(&mut Display::new(unmanaged.iter(), &mut loader));
@@ -133,6 +141,29 @@ fn entry(mut gba: agb::Gba) -> ! {
 
         tracker.step(&mut mixer);
         mixer.frame();
+    }
+}
+
+fn silence_mixer(mixer: &mut agb::sound::mixer::Mixer) {
+    static EMPTY_SOUND: &[u8] = {
+        #[repr(align(4))]
+        struct AlignmentWrapper([u8; 50]);
+
+        &AlignmentWrapper([0; 50]).0
+    };
+
+    // hack: can't currently clear all channels, so play 8 simultaneous tracks
+    // to overwrite the existing ones
+    let mut empty_channels = Vec::with_capacity(8);
+    for _ in 0..8 {
+        let empty_channel = SoundChannel::new_high_priority(EMPTY_SOUND);
+        empty_channels.push(mixer.play_sound(empty_channel));
+    }
+
+    for channel in empty_channels {
+        if let Some(channel) = channel.and_then(|id| mixer.channel(&id)) {
+            channel.stop();
+        }
     }
 }
 

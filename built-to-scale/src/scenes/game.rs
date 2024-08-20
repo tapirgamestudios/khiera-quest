@@ -545,6 +545,10 @@ impl GamePart {
 
             true
         });
+
+        if self.player.position.y < (-140).into() {
+            update.play_space_music();
+        }
     }
 
     fn display(&mut self, display: &mut super::Display) {
