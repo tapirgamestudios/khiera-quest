@@ -784,5 +784,6 @@ fn convert_sprite(sprite: map::DynamicColliderImage) -> &'static Sprite {
         map::DynamicColliderImage::ASTEROID1 => resources::ASTEROID1.sprite(0),
         map::DynamicColliderImage::ASTEROID2 => resources::ASTEROID2.sprite(0),
         map::DynamicColliderImage::ASTEROID3 => resources::ASTEROID3.sprite(0),
+        map::DynamicColliderImage::DIAGONAL_PLATFORM => resources::DIAGONAL_PLATFORM.sprite(0),
     }
 }

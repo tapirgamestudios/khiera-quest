@@ -55,6 +55,7 @@ extract_statics!(
         ASTEROID1,
         ASTEROID2,
         ASTEROID3,
+        DIAGONAL_PLATFORM,
     ]
 );
 
