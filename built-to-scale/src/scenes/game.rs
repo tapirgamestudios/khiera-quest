@@ -753,10 +753,12 @@ impl Terrain {
     }
 
     fn display(&self, display: &mut super::Display, camera_position: Vector2D<Number>) {
+        let camera = Rect::new(
+            camera_position - (WIDTH / 2 + 32, HEIGHT / 2 + 32).into(),
+            (WIDTH + 64, HEIGHT + 64).into(),
+        );
         for collider in self.loaded_dynamic_colliders.iter() {
-            if (collider.current_position - camera_position).magnitude_squared()
-                < (WIDTH * WIDTH / 3).into()
-            {
+            if camera.contains_point(collider.current_position) {
                 let image = convert_sprite(collider.path.image);
                 let image_size = image.size().to_width_height();
                 let image_size = Vector2D::new(image_size.0 as i32, image_size.1 as i32);
