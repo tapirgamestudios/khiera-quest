@@ -52,6 +52,9 @@ extract_statics!(
         PLATFORM_VERTICAL,
         ROUND_PLATFORM,
         SQUARE_PLATFORM,
+        ASTEROID1,
+        ASTEROID2,
+        ASTEROID3,
     ]
 );
 
