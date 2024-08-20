@@ -2251,55 +2251,55 @@
   </object>
   <object id="252" name="asteroid1" x="991.063" y="-984.688">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 75.6042,13.6875"/>
   </object>
   <object id="253" name="asteroid2" x="952" y="-1034">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 -25.6667,69.3333"/>
   </object>
   <object id="254" name="asteroid9" x="1056.33" y="-1039.67">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 65.6667,-53"/>
   </object>
   <object id="255" name="asteroid3" x="871" y="-1000">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 47,-55.6667"/>
   </object>
   <object id="256" name="asteroid4" x="904.667" y="-1081.33">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 141,-17"/>
   </object>
   <object id="257" name="asteroid8" x="1001.33" y="-1087.67">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 -2.66667,-103"/>
   </object>
   <object id="258" name="asteroid7" x="1090.33" y="-1111.67">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 -115.667,-10"/>
   </object>
   <object id="259" name="asteroid6" x="1031.33" y="-1152.67">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 -7.33333,134.667"/>
   </object>
-  <object id="260" name="asteroid5" x="951" y="-1137.67">
+  <object id="260" name="asteroid5" x="952.5" y="-1137.42">
    <properties>
-    <property name="speed" type="float" value="1"/>
+    <property name="speed" type="float" value="0.22"/>
    </properties>
    <polyline points="0,0 30,114"/>
   </object>
