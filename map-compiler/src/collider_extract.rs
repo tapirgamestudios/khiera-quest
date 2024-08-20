@@ -546,13 +546,19 @@ fn assemble_dynamic_colliders(map: &Map) -> String {
             })
             .collect();
 
+        let mut boxes_surrounding = HashSet::new();
+
         for (x, y) in boxes_path_goes_through {
             for (x, y) in SpiralIterator::new((x, y)).take(9) {
-                boxes_path_crosses_idx
-                    .entry((x, y))
-                    .or_default()
-                    .push(collider_group_idx);
+                boxes_surrounding.insert((x, y));
             }
+        }
+
+        for (x, y) in boxes_surrounding {
+            boxes_path_crosses_idx
+                .entry((x, y))
+                .or_default()
+                .push(collider_group_idx);
         }
     }
 
