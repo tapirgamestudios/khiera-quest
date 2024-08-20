@@ -1,7 +1,13 @@
 mod powerups;
 
+use core::fmt::Write;
+
 use agb::{
-    display::{affine::AffineMatrix, object::Sprite, HEIGHT, WIDTH},
+    display::{
+        affine::AffineMatrix,
+        object::{ObjectTextRender, PaletteVram, Size, Sprite, TextAlignment},
+        HEIGHT, WIDTH,
+    },
     fixnum::{num, Num, Rect, Vector2D},
 };
 
@@ -10,7 +16,10 @@ use map::{Path, PowerUpKind};
 use powerups::PowerUpObject;
 use util::{Circle, Collider, Number};
 
-use crate::resources::{self, BUBBLE, BUBBLE_POP};
+use crate::{
+    mission_logs::MISSION_LOGS,
+    resources::{self, BUBBLE, BUBBLE_POP, FONT, TEXT_PALETTE},
+};
 
 use super::{Scene, Update};
 
@@ -219,6 +228,7 @@ impl Player {
 pub struct Game {
     game: GamePart,
     terrain: Terrain,
+    mission_log: MissionLogPlayer,
 }
 
 struct GamePart {
@@ -262,9 +272,6 @@ impl GamePart {
                 pop_location: (0, 0).into(),
             },
 
-            // terrain: Terrain {
-            //     loaded_dynamic_colliders: Vec::new(),
-            // },
             powerups: map::POWER_UPS.iter().map(PowerUpObject::new).collect(),
         }
     }
@@ -596,6 +603,7 @@ impl Game {
             terrain: Terrain {
                 loaded_dynamic_colliders: Vec::new(),
             },
+            mission_log: MissionLogPlayer::new(),
         }
     }
 }
@@ -608,11 +616,13 @@ impl Scene for Game {
     fn update(&mut self, update: &mut Update) {
         self.terrain.update(self.game.player.position);
         self.game.update(update, &self.terrain);
+        self.mission_log.update(self.game.player.position);
     }
 
     fn display(&mut self, display: &mut super::Display) {
         self.terrain.display(display, self.game.camera.position);
         self.game.display(display);
+        self.mission_log.display(display);
     }
 }
 
@@ -785,5 +795,65 @@ fn convert_sprite(sprite: map::DynamicColliderImage) -> &'static Sprite {
         map::DynamicColliderImage::ASTEROID2 => resources::ASTEROID2.sprite(0),
         map::DynamicColliderImage::ASTEROID3 => resources::ASTEROID3.sprite(0),
         map::DynamicColliderImage::DIAGONAL_PLATFORM => resources::DIAGONAL_PLATFORM.sprite(0),
+    }
+}
+
+struct MissionLogPlayer {
+    playing_mission_log: Option<ObjectTextRender<'static>>,
+    currently_playing_mission_log_timer: u32,
+    encountered_mission_logs: u32,
+    palette: PaletteVram,
+}
+
+impl MissionLogPlayer {
+    fn new() -> Self {
+        Self {
+            playing_mission_log: None,
+            currently_playing_mission_log_timer: 0,
+            encountered_mission_logs: 0,
+            palette: PaletteVram::new(&TEXT_PALETTE).unwrap(),
+        }
+    }
+
+    fn update(&mut self, player_position: Vector2D<Number>) {
+        let floored = player_position.floor();
+        if let Some(playing_log) = self.playing_mission_log.as_mut() {
+            playing_log.next_letter_group();
+            playing_log.update((WIDTH / 4, HEIGHT / 4));
+            self.currently_playing_mission_log_timer += 1;
+            if self.currently_playing_mission_log_timer > 8 * 60 {
+                self.playing_mission_log = None;
+            }
+        } else {
+            let active = MISSION_LOGS
+                .iter()
+                .enumerate()
+                .find(|(_, x)| (x.point - floored).magnitude_squared() < 64 * 64);
+            if let Some((idx, log)) = active {
+                if self.encountered_mission_logs & (1 << idx) == 0 {
+                    // not yet encountered
+
+                    // mark as encountered
+                    self.encountered_mission_logs |= 1 << idx;
+
+                    self.currently_playing_mission_log_timer = 0;
+
+                    let mut render =
+                        ObjectTextRender::new(&FONT, Size::S32x32, self.palette.clone());
+
+                    let _ = render.write_str(log.text);
+                    let _ = render.write_char('\n');
+
+                    render.layout((WIDTH / 2, HEIGHT), TextAlignment::Left, 3);
+                    self.playing_mission_log = Some(render);
+                }
+            }
+        }
+    }
+
+    fn display(&mut self, display: &mut super::Display) {
+        if let Some(render) = self.playing_mission_log.as_mut() {
+            render.commit(display.oam());
+        }
     }
 }

@@ -1,4 +1,7 @@
-use agb::{display::object::Graphics, include_aseprite, include_background_gfx, include_wav};
+use agb::{
+    display::{object::Graphics, palette16::Palette16, Font},
+    include_aseprite, include_background_gfx, include_font, include_wav,
+};
 
 static SPRITES: &Graphics = include_aseprite!(
     "gfx/astronaut.aseprite",
@@ -6,6 +9,8 @@ static SPRITES: &Graphics = include_aseprite!(
     "gfx/powerups.aseprite",
     "gfx/collideable-objects.aseprite"
 );
+
+pub static FONT: Font = include_font!("fnt/Dungeon Puzzler Font.ttf", 8);
 
 include_background_gfx!(backgrounds, "000000",
     dummy => deduplicate "gfx/sprites.aseprite",
@@ -64,3 +69,7 @@ pub static POWER_UP_SOUND: &[u8] = include_wav!("game-sfx/power_up.wav");
 pub static DASH_SOUND: &[u8] = include_wav!("game-sfx/dash.wav");
 pub static LAND_GROUND: &[u8] = include_wav!("game-sfx/land_ground.wav");
 pub static RECOVERY_SOUND: &[u8] = include_wav!("game-sfx/recovery.wav");
+
+pub static TEXT_PALETTE: Palette16 = Palette16::new([
+    0, 0xFFFF, 0, 0xFFFF, 0x2b9f, 0x321f, 0x2b6c, 0x7ee6, 0x3619, 0x2485, 0, 0, 0, 0, 0, 0,
+]);

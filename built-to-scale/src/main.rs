@@ -23,6 +23,7 @@ use scenes::{Display, SceneManager, Update};
 
 extern crate alloc;
 
+mod mission_logs;
 mod resources;
 mod scenes;
 

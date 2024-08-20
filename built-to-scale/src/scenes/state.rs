@@ -82,7 +82,11 @@ impl<'a, 'b> Display<'a, 'b> {
     }
 }
 
-impl Display<'_, '_> {
+impl<'a, 'b> Display<'a, 'b> {
+    pub fn oam(&mut self) -> &mut OamIterator<'b> {
+        &mut self.oam_iter
+    }
+
     pub fn affine_object(
         &mut self,
         sprite: &'static Sprite,
