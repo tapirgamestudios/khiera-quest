@@ -127,7 +127,7 @@ fn entry(mut gba: agb::Gba) -> ! {
             }
 
             if update.should_play_space_music() && !is_playing_space_music {
-                silence_mixer(&mut mixer);
+                tracker.stop(&mut mixer);
 
                 tracker = Tracker::new(&sfx::SPACE_MUSIC);
                 is_playing_space_music = true;
@@ -142,29 +142,6 @@ fn entry(mut gba: agb::Gba) -> ! {
 
         tracker.step(&mut mixer);
         mixer.frame();
-    }
-}
-
-fn silence_mixer(mixer: &mut agb::sound::mixer::Mixer) {
-    static EMPTY_SOUND: &[u8] = {
-        #[repr(align(4))]
-        struct AlignmentWrapper([u8; 50]);
-
-        &AlignmentWrapper([0; 50]).0
-    };
-
-    // hack: can't currently clear all channels, so play 8 simultaneous tracks
-    // to overwrite the existing ones
-    let mut empty_channels = Vec::with_capacity(8);
-    for _ in 0..8 {
-        let empty_channel = SoundChannel::new_high_priority(EMPTY_SOUND);
-        empty_channels.push(mixer.play_sound(empty_channel));
-    }
-
-    for channel in empty_channels {
-        if let Some(channel) = channel.and_then(|id| mixer.channel(&id)) {
-            channel.stop();
-        }
     }
 }
 
