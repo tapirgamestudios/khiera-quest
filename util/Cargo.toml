@@ -7,6 +7,6 @@ edition = "2021"
 agb = ["dep:agb"]
 
 [dependencies]
-agb_fixnum = { path = "../../agb/agb-fixnum" }
+agb_fixnum = { version = "0.21.0" }
 
-agb = { path = "../../agb/agb", optional = true }
+agb = { version = "0.21.0", optional = true }
