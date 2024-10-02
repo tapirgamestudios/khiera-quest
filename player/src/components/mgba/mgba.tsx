@@ -8,12 +8,11 @@ import {
 import mGBA, { mGBAEmulator } from "./vendor/mgba";
 import { GbaKey, KeyBindings } from "./bindings";
 import { styled } from "styled-components";
-import { useFrameSkip } from "./useFrameSkip.hook";
 import { useController } from "./useController.hook";
 import { useLocalStorage } from "./useLocalStorage.hook";
 
 interface MgbaProps {
-  gameUrl: string;
+  gameUrl: URL;
   volume?: number;
   controls: KeyBindings;
   paused: boolean;
@@ -41,7 +40,7 @@ export interface MgbaHandle {
   buttonRelease: (key: GbaKey) => void;
 }
 
-async function downloadGame(gameUrl: string): Promise<ArrayBuffer> {
+async function downloadGame(gameUrl: URL): Promise<ArrayBuffer> {
   const game = await fetch(gameUrl);
 
   const gameUrlString = gameUrl.toString();
@@ -67,7 +66,7 @@ export const Mgba = forwardRef<MgbaHandle, MgbaProps>(
 
     const [saveGame, setSaveGame] = useLocalStorage<SaveGame>(
       {},
-      "tapirgames/savegames"
+      "agbrswebplayer/savegames"
     );
     const gameUrlString = gameUrl.toString();
 
@@ -148,7 +147,6 @@ export const Mgba = forwardRef<MgbaHandle, MgbaProps>(
         };
     }, [state]);
 
-    useFrameSkip(mgbaModule);
     useController(mgbaModule);
 
     useEffect(() => {

@@ -7,30 +7,21 @@ declare namespace mGBA {
     gamePath: string;
     savePath: string;
     saveStatePath: string;
-  }
-
-  // Note: this method is available, but missing from emscripten typings
-  // see: https://emscripten.org/docs/api_reference/Filesystem-API.html#FS.analyzePath
-  interface FSWithAnalyze {
-    analyzePath: (
-      path: string,
-      dontResolveLastLink?: boolean
-    ) => {
-      isRoot: boolean;
-      exists: boolean;
-      error: Error;
-      name: string;
-      path: string;
-      object: FS.FSNode;
-      parentExists: boolean;
-      parentPath: stringToUTF16;
-      parentObject: FS.FSNode;
-    };
+    screenshotsPath: string;
   }
 
   // see: https://developer.mozilla.org/en-US/docs/Web/API/BaseAudioContext/state
   //      interrupted is a valid property on iOS
   type ExtendedAudioContextState = AudioContextState | 'interrupted';
+
+  export type coreCallbacks = {
+    alarmCallback?: (() => void) | null;
+    coreCrashedCallback?: (() => void) | null;
+    keysReadCallback?: (() => void) | null;
+    saveDataUpdatedCallback?: (() => void) | null;
+    videoFrameEndedCallback?: (() => void) | null;
+    videoFrameStartedCallback?: (() => void) | null;
+  };
 
   export interface mGBAEmulator extends EmscriptenModule {
     // custom methods from preamble
@@ -40,7 +31,9 @@ declare namespace mGBA {
     buttonUnpress(name: string): void;
     FSInit(): Promise<void>;
     FSSync(): Promise<void>;
-    getMainLoopTiming(): number;
+    getFastForwardMultiplier(): number;
+    getMainLoopTimingMode(): number;
+    getMainLoopTimingValue(): number;
     getSave(): Uint8Array;
     getVolume(): number;
     listRoms(): void;
@@ -53,13 +46,15 @@ declare namespace mGBA {
     quitMgba(): void;
     resumeGame(): void;
     saveState(slot: number): boolean;
-    screenShot(callback: () => void): void;
+    screenshot(fileName?: string): boolean;
+    setFastForwardMultiplier(multiplier: number): void;
     setMainLoopTiming(mode: number, value: number): void;
     setVolume(percent: number): void;
     toggleInput(enabled: boolean): void;
     uploadCheats(file: File, callback?: () => void): void;
     uploadRom(file: File, callback?: () => void): void;
     uploadSaveOrSaveState(file: File, callback?: () => void): void;
+    addCoreCallbacks(coreCallbacks: coreCallbacks): void;
     // custom variables
     version: {
       projectName: string;
@@ -69,7 +64,7 @@ declare namespace mGBA {
     gameName?: string;
     saveName?: string;
     // extra exported runtime methods
-    FS: typeof FS & FSWithAnalyze;
+    FS: typeof FS;
     // SDL2
     SDL2: {
       audio: {
